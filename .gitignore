@@ -24,3 +24,11 @@ dist-ssr
 *.sw?
 
 .env
+
+# Local AI agent settings
+.claude/settings.local.json
+.cursor/mcp.json
+.aider*
+.continue/
+.windsurf/
+CLAUDE.local.md
