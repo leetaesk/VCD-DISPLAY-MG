@@ -10,10 +10,10 @@
 | 3 — WebGL 래퍼 | ✅ 완료 | `addc41f` | glContext, wienerPipeline, useWebGLPipeline (StrictMode 안전) |
 | 4 — MediaPipe | ✅ 완료 | `d636e30` | npm `tasks-vision`, FaceLandmarkerTracker, useFaceLandmarker (상태 반환) |
 | 5 — 셸/라우팅 | ✅ 완료 | `8540f9a` | Layout(사이드바+뱃지), 10개 라우트, ErrorBoundary, 페이지 stub |
-| 6 — 페이지 이식 | 🚧 시작 전 | — | 10개 페이지가 PlaceholderPage stub 상태 |
-| 7 — 검증·배포 | ⏳ | — | |
+| 6 — 페이지 이식 | ✅ 완료 | `9850e3c`~`e96fde6` | 10개 페이지 전부 이식 (profile/calibration/refraction/vision/csf/color/amsler/webgl-test/preview/camera) |
+| 7 — 검증·배포 | ✅ 완료 | — | localStorage v1 호환 e2e 테스트 추가, Vercel SPA rewrites 확인 |
 
-**현재 빌드 상태**: 141 modules, 358KB / 112KB gzip. 테스트 31/31 통과.
+**현재 빌드 상태**: 170 modules, 644KB / 200KB gzip. 테스트 32/32 통과.
 
 ---
 
@@ -216,21 +216,30 @@ Phase 0 ─→ Phase 1 ┼─→ Phase 3 ─┼─→ Phase 6 ─→ Phase 7
 - [x] `Layout.tsx` 사이드바 + 뱃지
 - [x] `components/ErrorBoundary.tsx` (Layout 안 `<Outlet />` 래핑)
 
-### Phase 6 — 페이지 (순서대로)
+### Phase 6 — 페이지 ✅
 
-- [ ] `/profile`
-- [ ] `/calibration`
-- [ ] `/refraction`
-- [ ] `/vision`
-- [ ] `/csf`
-- [ ] `/color`
-- [ ] `/amsler`
-- [ ] `/webgl-test`
-- [ ] `/preview`
-- [ ] `/camera`
+- [x] `/profile` (7 측정 카드, PSF 미리보기, JSON 입출력)
+- [x] `/calibration` (3-step: PPI 카드 → MediaPipe 거리 → 요약)
+- [x] `/refraction` (defocus staircase + 난시 fan chart)
+- [x] `/vision` (LogMAR ETDRS staircase, 키보드 입력)
+- [x] `/csf` (7 freq × 3-down/1-up, SVG log-log chart)
+- [x] `/color` (Ishihara + FM100 + Machado/Daltonize 시뮬)
+- [x] `/amsler` (Pointer Events 드로잉 → 256² PNG)
+- [x] `/webgl-test` (FFT/PSF 단위 테스트 + Wiener 데모)
+- [x] `/preview` (4-패널 256² M1→M4 end-to-end)
+- [x] `/camera` (실시간 grayscale VCD, 자동 다운스케일, perf HUD)
 
-### Phase 7 — 배포
+### Phase 7 — 배포 ✅
 
-- [ ] 기존 localStorage 호환 검증
-- [ ] Vercel SPA fallback
-- [ ] 실기기 카메라 권한 확인
+- [x] 기존 localStorage v1 호환 검증 (`profile.test.ts`에 e2e 테스트)
+- [x] Vercel SPA fallback (`vercel.json` rewrites)
+- [ ] 실기기 카메라 권한 확인 _(배포 후 사용자 확인 필요)_
+
+### Phase 6에서 신규 생성된 모듈
+
+- `features/vcd/optics.ts` — logmarToPx, diopterToBlurPx (vision/refraction 공통)
+- `features/vcd/csf.ts` — staircase, classification (순수)
+- `features/vcd/cameraPipeline.ts` — pre-allocated 텍스처/FBO 파이프라인
+- `features/color/{ishiharaPlates,fm100,classify}.ts` — 색각 도메인 분리
+- `components/GateCalibration.tsx` — 캘리브레이션 안 됐을 때 공통 안내
+- `ui/csf/CSFChart.tsx` — log-log SVG chart (Chart.js 미사용)

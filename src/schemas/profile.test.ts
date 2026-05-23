@@ -54,4 +54,53 @@ describe('VCDProfileSchema', () => {
     };
     expect(VCDProfileSchema.safeParse(profile).success).toBe(true);
   });
+
+  // Phase 7 verification: full v1 profile from the original vcd-display app
+  // (모든 슬라이스가 채워진 상태)가 vcd-display-mg에서 그대로 로드되는지.
+  it('vcd-display v1 full profile loads end-to-end', () => {
+    const legacyV1 = {
+      user_id: 'u-abc12345',
+      calibration: {
+        screen_ppi: 110.3,
+        screen_width_mm: 295.7,
+        viewing_distance_cm: 55,
+        distance_source: 'mediapipe_ipd' as const,
+        calibration_timestamp: '2025-11-01T08:15:00.000Z',
+      },
+      refraction: {
+        od: { sph: -2.5, cyl: -0.75, axis: 90 },
+        os: { sph: -2.0, cyl: -0.5, axis: 85 },
+        confidence: 0.82,
+      },
+      logmar: {
+        od: { logmar: 0.0, confidence: 0.9, screen_limited: false },
+        os: { logmar: 0.1, confidence: 0.85, screen_limited: false },
+      },
+      csf_curve: {
+        od: {
+          freqs: [0.5, 1, 2, 4, 8, 12, 16],
+          thresholds: [0.02, 0.01, 0.005, 0.005, 0.01, 0.03, null],
+          sensitivities: [50, 100, 200, 200, 100, 33.3, null],
+          confidence: 0.78,
+          classification: 'normal' as const,
+        },
+        tested_at: '2025-11-01T08:30:00.000Z',
+      },
+      color_vision: {
+        type: 'normal' as const,
+        severity: 0,
+      },
+      amsler_map_od: null,
+      amsler_map_os: null,
+      zernike: null,
+      updated_at: '2025-11-01T08:30:00.000Z',
+    };
+    const parsed = parseStoredProfile(legacyV1);
+    expect(parsed.user_id).toBe('u-abc12345');
+    expect(parsed.calibration?.screen_ppi).toBe(110.3);
+    expect(parsed.refraction?.od.sph).toBe(-2.5);
+    expect(parsed.logmar?.od?.logmar).toBe(0.0);
+    expect(parsed.csf_curve?.od?.sensitivities[0]).toBe(50);
+    expect(parsed.color_vision?.type).toBe('normal');
+  });
 });
