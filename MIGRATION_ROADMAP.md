@@ -1,5 +1,22 @@
 # vcd-display → vcd-display-mg 마이그레이션 로드맵
 
+## 진행 상황
+
+| Phase | 상태 | 커밋 | 비고 |
+| --- | --- | --- | --- |
+| 0 — 기반 | ✅ 완료 | `a6f6f8e` | Tailwind v4, vitest, 셰이더 9개, Vercel rewrites |
+| 1 — 상태/모델 | ✅ 완료 | `9a6ea92` | zod 스키마 + zustand + cross-tab + constants |
+| 2 — 순수 도메인 로직 | ✅ 완료 | `232f146` | psf, fft, binocular, machado (테스트 31개 통과) |
+| 3 — WebGL 래퍼 | ✅ 완료 | `addc41f` | glContext, wienerPipeline, useWebGLPipeline (StrictMode 안전) |
+| 4 — MediaPipe | ✅ 완료 | `d636e30` | npm `tasks-vision`, FaceLandmarkerTracker, useFaceLandmarker (상태 반환) |
+| 5 — 셸/라우팅 | ✅ 완료 | `8540f9a` | Layout(사이드바+뱃지), 10개 라우트, ErrorBoundary, 페이지 stub |
+| 6 — 페이지 이식 | 🚧 시작 전 | — | 10개 페이지가 PlaceholderPage stub 상태 |
+| 7 — 검증·배포 | ⏳ | — | |
+
+**현재 빌드 상태**: 141 modules, 358KB / 112KB gzip. 테스트 31/31 통과.
+
+---
+
 ## 현황 분석
 
 **소스 (`vcd-display/vcd-app`)**
@@ -155,49 +172,49 @@ Phase 0 ─→ Phase 1 ┼─→ Phase 3 ─┼─→ Phase 6 ─→ Phase 7
 
 ## 체크리스트 요약
 
-### Phase 0 — 기반
+### Phase 0 — 기반 ✅
 
-- [ ] `@mediapipe/tasks-vision`, `zod`, `zustand` 설치
-- [ ] `vitest` + `@testing-library/react` + `jsdom` 설치 (테스트 환경)
-- [ ] `tailwindcss` + `@tailwindcss/vite` 설치 및 vite 플러그인 등록
-- [ ] `index.css`에 `@import "tailwindcss";` + `@theme {}` 토큰 정의
-- [ ] 셰이더 9개를 `src/features/vcd/shaders/`로 이동 (public 아님)
-- [ ] `vite-env.d.ts`에 `declare module '*.frag?raw'` / `'*.vert?raw'` 추가
-- [ ] 기존 `style.css` → Tailwind 클래스로 변환
-- [ ] Vercel rewrites 설정
+- [x] `@mediapipe/tasks-vision`, `zod`, `zustand` 설치
+- [x] `vitest` + `@testing-library/react` + `jsdom` 설치 (테스트 환경)
+- [x] `tailwindcss` + `@tailwindcss/vite` 설치 및 vite 플러그인 등록
+- [x] `index.css`에 `@import "tailwindcss";` + `@theme {}` 토큰 정의
+- [x] 셰이더 9개를 `src/features/vcd/shaders/`로 이동 (public 아님)
+- [x] `vite-env.d.ts`에 `declare module '*.frag?raw'` / `'*.vert?raw'` 추가
+- [ ] 기존 `style.css` → Tailwind 클래스로 변환 _(Phase 6에서 페이지별로)_
+- [x] Vercel rewrites 설정
 
-### Phase 1 — 상태/모델
+### Phase 1 — 상태/모델 ✅
 
-- [ ] `schemas/profile.ts` (zod 스키마 — SoT)
-- [ ] `types/profile.ts` (`z.infer`로 스키마에서 타입 도출)
-- [ ] `store/profileStore.ts` (zustand + persist + **수동 `storage` 이벤트 cross-tab sync**)
-- [ ] `constants/` (라우트, LogMAR, CSF, Sloan, Machado)
+- [x] `schemas/profile.ts` (zod 스키마 — SoT)
+- [x] `types/profile.ts` (`z.infer`로 스키마에서 타입 도출)
+- [x] `store/profileStore.ts` (zustand + persist + **수동 `storage` 이벤트 cross-tab sync**)
+- [x] `constants/` (라우트, LogMAR, CSF, Sloan, Machado)
 
-### Phase 2 — 순수 로직
+### Phase 2 — 순수 로직 ✅
 
-- [ ] `features/vcd/psf.ts`
-- [ ] `features/vcd/fft.ts`
-- [ ] `features/vcd/binocular.ts`
-- [ ] `features/color/machado.ts`
+- [x] `features/vcd/psf.ts`
+- [x] `features/vcd/fft.ts`
+- [x] `features/vcd/binocular.ts`
+- [x] `features/color/machado.ts`
 
-### Phase 3 — WebGL
+### Phase 3 — WebGL ✅
 
-- [ ] `features/vcd/glContext.ts` (셰이더 `?raw` 임포트)
-- [ ] `features/vcd/wienerPipeline.ts` (`init` / `dispose`)
-- [ ] `hooks/useWebGLPipeline.ts` (**StrictMode double-mount 안전**, `WEBGL_lose_context`로 해제)
-- [ ] `hooks/useAnimationFrame.ts` (콜백 ref 패턴)
+- [x] `features/vcd/glContext.ts` (셰이더 `?raw` 임포트)
+- [x] `features/vcd/wienerPipeline.ts` (`init` / `dispose`)
+- [x] `hooks/useWebGLPipeline.ts` (**StrictMode double-mount 안전**, `WEBGL_lose_context`로 해제)
+- [x] `hooks/useAnimationFrame.ts` (콜백 ref 패턴)
 
-### Phase 4 — MediaPipe
+### Phase 4 — MediaPipe ✅
 
-- [ ] `features/eye-tracking/faceLandmarker.ts`
-- [ ] `hooks/useFaceLandmarker.ts` (**상태 반환** — 콜백 prop 금지)
-- [ ] `public/mediapipe/` WASM 호스팅
+- [x] `features/eye-tracking/faceLandmarker.ts`
+- [x] `hooks/useFaceLandmarker.ts` (**상태 반환** — 콜백 prop 금지)
+- [ ] `public/mediapipe/` WASM 호스팅 _(현재 CDN 기본값, 페이지 이식 시 결정)_
 
-### Phase 5 — 셸
+### Phase 5 — 셸 ✅
 
-- [ ] `apps/router.tsx` 10개 라우트 (security 제외)
-- [ ] `Layout.tsx` 사이드바 + 뱃지
-- [ ] `components/ErrorBoundary.tsx` (Layout 안 `<Outlet />` 래핑)
+- [x] `apps/router.tsx` 10개 라우트 (security 제외)
+- [x] `Layout.tsx` 사이드바 + 뱃지
+- [x] `components/ErrorBoundary.tsx` (Layout 안 `<Outlet />` 래핑)
 
 ### Phase 6 — 페이지 (순서대로)
 
