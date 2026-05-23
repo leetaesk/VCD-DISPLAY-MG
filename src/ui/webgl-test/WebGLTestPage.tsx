@@ -11,7 +11,7 @@ import {
   type GLContext,
   type PipelinePrograms,
 } from '@/features/vcd/glContext';
-import { fft2d } from '@/features/vcd/fft';
+import { fft2dPacked, mulComplexPacked } from '@/features/vcd/fft';
 import { generatePSF, ifftshift2d, refractionToZernike } from '@/features/vcd/psf';
 import { WienerPipeline } from '@/features/vcd/wienerPipeline';
 
@@ -332,7 +332,7 @@ function DemoSection({
     const psf = buildPSF(N, SIGMA);
     const F_img = cpuFFT2D(original, N, false);
     const H = cpuFFT2D(psf, N, false);
-    const FH = mulComplex(F_img, H, N);
+    const FH = mulComplexPacked(F_img, H, N);
     const blurred = cpuFFT2D(FH, N, true);
     const F_blur = cpuFFT2D(blurred, N, false);
     dataRef.current = { original, blurred, psf, F_blur, H };
@@ -480,21 +480,7 @@ function buildPSF(N: number, sigma: number): Float32Array {
   return psf;
 }
 
-function cpuFFT2D(packed: Float32Array, N: number, inverse: boolean): Float32Array {
-  const re = new Float64Array(N * N);
-  const im = new Float64Array(N * N);
-  for (let i = 0; i < N * N; i++) {
-    re[i] = packed[i * 2];
-    im[i] = packed[i * 2 + 1];
-  }
-  fft2d(re, im, N, inverse);
-  const out = new Float32Array(N * N * 2);
-  for (let i = 0; i < N * N; i++) {
-    out[i * 2] = re[i];
-    out[i * 2 + 1] = im[i];
-  }
-  return out;
-}
+const cpuFFT2D = fft2dPacked;
 
 function gpuFFT2D(
   pipeline: WienerPipeline,
@@ -511,19 +497,6 @@ function gpuFFT2D(
   gl.deleteTexture(inTex);
   gl.deleteTexture(outTex);
   return result;
-}
-
-function mulComplex(A: Float32Array, B: Float32Array, N: number): Float32Array {
-  const out = new Float32Array(N * N * 2);
-  for (let i = 0; i < N * N; i++) {
-    const ar = A[i * 2];
-    const ai = A[i * 2 + 1];
-    const br = B[i * 2];
-    const bi = B[i * 2 + 1];
-    out[i * 2] = ar * br - ai * bi;
-    out[i * 2 + 1] = ar * bi + ai * br;
-  }
-  return out;
 }
 
 function maxAbsDiff(a: Float32Array, b: Float32Array): number {

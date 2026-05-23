@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
 import { computeWeights, strengthAt } from '@/features/vcd/binocular';
 import { CameraPipeline, type CameraMode, type FrameTimings } from '@/features/vcd/cameraPipeline';
-import { fft2d } from '@/features/vcd/fft';
+import { fft2dPacked } from '@/features/vcd/fft';
 import {
   createGLContext,
   createPipelinePrograms,
@@ -17,6 +17,7 @@ import {
 import { generatePSF } from '@/features/vcd/psf';
 import { useFaceLandmarker } from '@/hooks/useFaceLandmarker';
 import { useProfileStore } from '@/store/profileStore';
+import { friendlyCamMessage } from '@/utils/camera';
 import type { Eye, EyeRefraction, VCDProfile } from '@/types/profile';
 
 /* ─────────────────────────────────────────────────────────
@@ -193,7 +194,7 @@ function CameraApp({ profile }: { profile: VCDProfile }) {
       const psfData = generatePSF(rx, { N, pupil_mm: 3.0 });
       const psfPacked = new Float32Array(N * N * 2);
       for (let i = 0; i < N * N; i++) psfPacked[i * 2] = psfData.psf[i];
-      const H = cpuFFT2D(psfPacked, N, false);
+      const H = fft2dPacked(psfPacked, N, false);
       if (e === 'od') pipeline.uploadHOd(H);
       else pipeline.uploadHOs(H);
       psfCacheRef.current[e] = key;
@@ -466,39 +467,6 @@ function fmtRx(e: EyeRefraction | null | undefined): string {
   if (!e) return '--';
   const sph = (e.sph > 0 ? '+' : '') + e.sph.toFixed(2);
   return `${sph}/${e.cyl.toFixed(2)}×${e.axis}°`;
-}
-
-function friendlyCamMessage(e: Error): string {
-  switch (e.name) {
-    case 'NotAllowedError':
-      return '카메라 권한이 거부되었습니다. 브라우저 주소창에서 권한을 허용해 주세요.';
-    case 'NotFoundError':
-      return '카메라를 찾을 수 없습니다.';
-    case 'NotReadableError':
-      return '다른 앱이 카메라를 사용 중입니다.';
-    case 'OverconstrainedError':
-      return '선택한 카메라가 이 기기에 없습니다.';
-    case 'SecurityError':
-      return 'HTTPS 또는 localhost에서만 카메라를 사용할 수 있습니다.';
-    default:
-      return e.message || String(e);
-  }
-}
-
-function cpuFFT2D(packed: Float32Array, N: number, inverse: boolean): Float32Array {
-  const re = new Float64Array(N * N);
-  const im = new Float64Array(N * N);
-  for (let i = 0; i < N * N; i++) {
-    re[i] = packed[i * 2];
-    im[i] = packed[i * 2 + 1];
-  }
-  fft2d(re, im, N, inverse);
-  const out = new Float32Array(N * N * 2);
-  for (let i = 0; i < N * N; i++) {
-    out[i * 2] = re[i];
-    out[i * 2 + 1] = im[i];
-  }
-  return out;
 }
 
 // ── UI bits ───────────────────────────────────────────

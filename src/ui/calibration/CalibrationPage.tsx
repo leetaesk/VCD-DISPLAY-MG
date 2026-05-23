@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { CREDIT_CARD_MM, ROUTES } from '@/constants';
 import { useFaceLandmarker } from '@/hooks/useFaceLandmarker';
 import { useProfileStore } from '@/store/profileStore';
+import { friendlyCamMessage } from '@/utils/camera';
 
 /* ─────────────────────────────────────────────────────────
    CalibrationPage — 3-step PPI + viewing distance wizard.
@@ -470,23 +471,6 @@ function statusLabel(s: 'idle' | 'loading' | 'running' | 'error'): string {
       return '추적 중';
     case 'error':
       return '오류';
-  }
-}
-
-function friendlyCamMessage(e: Error): string {
-  switch (e.name) {
-    case 'NotAllowedError':
-    case 'SecurityError':
-      return '카메라 권한이 거부되었습니다. 브라우저 주소창 옆 아이콘에서 권한을 허용해 주세요.';
-    case 'NotFoundError':
-    case 'OverconstrainedError':
-      return '사용 가능한 카메라를 찾지 못했습니다. 다른 앱이 카메라를 사용 중인지 확인해 주세요.';
-    case 'NotReadableError':
-      return '카메라를 시작할 수 없습니다. 다른 앱이 카메라를 사용 중일 수 있습니다.';
-    case 'AbortError':
-      return '카메라 시작이 중단되었습니다. 다시 시도해 주세요.';
-    default:
-      return e.message || String(e);
   }
 }
 

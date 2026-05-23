@@ -78,6 +78,43 @@ export function fft1dInPlace(re: Float64Array, im: Float64Array, inverse: boolea
 }
 
 /**
+ * Packed [re, im, re, im, ...] Float32Array를 받아서 2D FFT 수행 후 새 Float32Array 반환.
+ * preview / camera / webgl-test가 모두 이 형태를 사용 — 통합 헬퍼.
+ */
+export function fft2dPacked(packed: Float32Array, N: number, inverse: boolean): Float32Array {
+  const re = new Float64Array(N * N);
+  const im = new Float64Array(N * N);
+  for (let i = 0; i < N * N; i++) {
+    re[i] = packed[i * 2];
+    im[i] = packed[i * 2 + 1];
+  }
+  fft2d(re, im, N, inverse);
+  const out = new Float32Array(N * N * 2);
+  for (let i = 0; i < N * N; i++) {
+    out[i * 2] = re[i];
+    out[i * 2 + 1] = im[i];
+  }
+  return out;
+}
+
+/**
+ * Packed 복소 배열 두 개의 점별 곱 — convolution을 주파수 영역에서 계산할 때.
+ *   (a + bi)(c + di) = (ac − bd) + (ad + bc)i
+ */
+export function mulComplexPacked(A: Float32Array, B: Float32Array, N: number): Float32Array {
+  const out = new Float32Array(N * N * 2);
+  for (let i = 0; i < N * N; i++) {
+    const ar = A[i * 2];
+    const ai = A[i * 2 + 1];
+    const br = B[i * 2];
+    const bi = B[i * 2 + 1];
+    out[i * 2] = ar * br - ai * bi;
+    out[i * 2 + 1] = ar * bi + ai * br;
+  }
+  return out;
+}
+
+/**
  * 2D FFT in-place (row-major, N×N).
  * 행 방향 FFT → 열 방향 FFT (separable).
  */

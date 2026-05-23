@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { ROUTES } from '@/constants/routes';
-import { fft2d } from '@/features/vcd/fft';
+import { fft2dPacked, mulComplexPacked } from '@/features/vcd/fft';
 import {
   createGLContext,
   createPipelinePrograms,
@@ -140,7 +140,7 @@ function PreviewApp({ profile }: { profile: VCDProfile }) {
 
   const F_intended = useMemo(() => {
     if (!intendedImg) return null;
-    return cpuFFT2D(intendedImg, N, false);
+    return fft2dPacked(intendedImg, N, false);
   }, [intendedImg]);
 
   // PSF + H per eye (캐시)
@@ -152,13 +152,13 @@ function PreviewApp({ profile }: { profile: VCDProfile }) {
     const r = generatePSF(rx, { N, pupil_mm: 3.0 });
     const psfPacked = new Float32Array(N * N * 2);
     for (let i = 0; i < N * N; i++) psfPacked[i * 2] = r.psf[i];
-    return cpuFFT2D(psfPacked, N, false);
+    return fft2dPacked(psfPacked, N, false);
   }, [rx]);
 
   // ② User no VCD = IFFT(F · H)
   const userNoVCD = useMemo(() => {
     if (!F_intended || !H) return null;
-    return cpuFFT2D(mulComplex(F_intended, H, N), N, true);
+    return fft2dPacked(mulComplexPacked(F_intended, H, N), N, true);
   }, [F_intended, H]);
 
   // ③/④ K-dependent: GPU Wiener
@@ -180,8 +180,8 @@ function PreviewApp({ profile }: { profile: VCDProfile }) {
     ctx.gl.deleteTexture(dispTex);
     ctx.gl.deleteTexture(fImageTex);
     ctx.gl.deleteTexture(hTex);
-    setDisplayed(cpuFFT2D(F_displayed, N, true));
-    setUserWithVCD(cpuFFT2D(mulComplex(F_displayed, H, N), N, true));
+    setDisplayed(fft2dPacked(F_displayed, N, true));
+    setUserWithVCD(fft2dPacked(mulComplexPacked(F_displayed, H, N), N, true));
   }, [gl, F_intended, H, kLevel]);
 
   // RMS
@@ -370,35 +370,6 @@ function Panel({ caption, data }: { caption: string; data: Float32Array | null }
 }
 
 // ── CPU helpers ───────────────────────────────────────
-function cpuFFT2D(packed: Float32Array, N: number, inverse: boolean): Float32Array {
-  const re = new Float64Array(N * N);
-  const im = new Float64Array(N * N);
-  for (let i = 0; i < N * N; i++) {
-    re[i] = packed[i * 2];
-    im[i] = packed[i * 2 + 1];
-  }
-  fft2d(re, im, N, inverse);
-  const out = new Float32Array(N * N * 2);
-  for (let i = 0; i < N * N; i++) {
-    out[i * 2] = re[i];
-    out[i * 2 + 1] = im[i];
-  }
-  return out;
-}
-
-function mulComplex(A: Float32Array, B: Float32Array, N: number): Float32Array {
-  const out = new Float32Array(N * N * 2);
-  for (let i = 0; i < N * N; i++) {
-    const ar = A[i * 2];
-    const ai = A[i * 2 + 1];
-    const br = B[i * 2];
-    const bi = B[i * 2 + 1];
-    out[i * 2] = ar * br - ai * bi;
-    out[i * 2 + 1] = ar * bi + ai * br;
-  }
-  return out;
-}
-
 function rmsRealDiff(A: Float32Array, B: Float32Array, N: number): number {
   let s = 0;
   for (let i = 0; i < N * N; i++) {
