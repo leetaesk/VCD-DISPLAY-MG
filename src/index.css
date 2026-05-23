@@ -1,14 +1,52 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import 'tailwindcss';
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+/* ─────────────────────────────────────────────────────────
+   VCD 디자인 토큰 — vcd-display의 style.css :root 변수에서 추출.
+   Tailwind v4 @theme로 등록하면 bg-bg, text-text-dim, rounded-md
+   같은 유틸로 바로 쓸 수 있음.
+   ───────────────────────────────────────────────────────── */
+@theme {
+  --color-bg: #0b0d12;
+  --color-bg-elev: #12151c;
+  --color-bg-elev-2: #181c25;
+  --color-line: #232836;
+  --color-text: #e7ecf3;
+  --color-text-dim: #9aa3b2;
+  --color-muted: #6b7280;
+  --color-accent: #6ea8ff;
+  --color-accent-2: #9b8cff;
+  --color-ok: #4ade80;
+  --color-warn: #fbbf24;
+  --color-err: #f87171;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --spacing-sidebar: 240px;
+  --spacing-topbar: 56px;
+  --spacing-bottombar: 36px;
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', 'Apple SD Gothic Neo',
+    'Pretendard', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+}
+
+/* 전역 base — body 배경/색 등은 토큰을 그대로 참조.
+   페이지별 CSS는 Phase 6에서 컴포넌트로 옮기며 Tailwind 클래스화. */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
