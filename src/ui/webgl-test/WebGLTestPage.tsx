@@ -187,13 +187,18 @@ function TestsSection({
 
     // 5. CPU↔GPU agreement
     {
+      // GLSL ES cos/sin은 highp여도 ~10비트 정확도(상대오차 ~1e-3)인 드라이버가
+      // 많아 log2(N²) stage 누적으로 GPU 결과가 ~1% 어긋나는 게 정상.
+      // 절대오차 대신 max|cpu|로 정규화한 상대오차로 비교.
       const cpu = cpuFFT2D(orig, N, false);
       const gpu = gpuFFT2D(pipeline, ctx, orig, N, false);
-      const err = maxAbsDiff(cpu, gpu);
+      const absErr = maxAbsDiff(cpu, gpu);
+      const cpuMax = maxAbs(cpu);
+      const relErr = cpuMax > 0 ? absErr / cpuMax : absErr;
       out.push({
         name: 'CPU ↔ GPU forward FFT agree',
-        pass: err < 5e-3,
-        detail: `max|err| = ${err.toExponential(2)}`,
+        pass: relErr < 5e-3,
+        detail: `max|err|/max|cpu| = ${relErr.toExponential(2)}`,
       });
     }
 
@@ -527,6 +532,15 @@ function maxAbsDiff(a: Float32Array, b: Float32Array): number {
   for (let i = 0; i < a.length; i++) {
     const d = Math.abs(a[i] - b[i]);
     if (d > m) m = d;
+  }
+  return m;
+}
+
+function maxAbs(a: Float32Array): number {
+  let m = 0;
+  for (let i = 0; i < a.length; i++) {
+    const v = Math.abs(a[i]);
+    if (v > m) m = v;
   }
   return m;
 }
