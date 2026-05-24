@@ -161,19 +161,84 @@ function Step1({ onNext }: { onNext: (ppi: number, widthMm: number) => void }) {
         </output>
       </div>
 
-      <div className="mb-4 flex items-center justify-center rounded-md border border-dashed border-line bg-bg p-6">
+      <div className="mb-4 flex items-center justify-center rounded-md border border-dashed border-line bg-[#1e1e1e] p-6">
         <div
           role="img"
           aria-label="신용카드 오른쪽 절반 가이드"
-          className="bg-text-dim/15"
+          className="relative overflow-hidden"
           style={{
             width: `${w}px`,
             height: `${h}px`,
-            backgroundImage:
-              'repeating-linear-gradient(45deg, transparent 0 6px, rgba(110,168,255,0.4) 6px 7px)',
-            border: '1px dashed var(--color-accent)',
+            background: 'linear-gradient(315deg, #3a4254 0%, #25293a 100%)',
+            border: '1px solid #4a5169',
+            borderLeft: '2px dashed rgba(255,255,255,0.35)',
+            borderRadius: '0 10px 10px 0',
+            boxShadow:
+              'inset 0 0 0 1px rgba(255,255,255,0.04), 0 6px 18px rgba(0,0,0,0.35)',
           }}
-        />
+        >
+          {/* IC chip — ISO 7816 비율 (≈ 12×8mm, 카드 전폭 대비 14% × 14.8%) */}
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              // half-card 폭(42.8mm)에서 chip 가로(12mm) → 28%, 카드 좌측에서 17mm → 우측 기준 12mm/42.8 → 28%
+              right: '14%',
+              top: '15%',
+              width: '28%',
+              // 카드 세로(53.98mm) 대비 chip 세로(8mm) → 14.8%
+              aspectRatio: '12 / 8',
+              background:
+                'linear-gradient(135deg, #e8c558 0%, #c79a30 55%, #8c6a1d 100%)',
+              borderRadius: 3,
+              boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.25)',
+              opacity: 0.85,
+            }}
+          >
+            {/* chip 내부 contact 라인 — 가로 2줄 */}
+            <span
+              aria-hidden
+              style={{
+                position: 'absolute',
+                inset: '22% 12%',
+                borderTop: '1px solid rgba(0,0,0,0.35)',
+                borderBottom: '1px solid rgba(0,0,0,0.35)',
+              }}
+            />
+          </span>
+
+          {/* 카드 번호 자리 흔적 — 반쪽이라 오른쪽 4자리만 보이게 (얇은 4묶음 라인) */}
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              left: '12%',
+              right: '10%',
+              bottom: '30%',
+              height: '6%',
+              background:
+                'repeating-linear-gradient(90deg, rgba(255,255,255,0.18) 0 10%, transparent 10% 14%)',
+              borderRadius: 2,
+            }}
+          />
+
+          {/* 절단선 표시 (왼쪽 가장자리 가위) */}
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              left: -18,
+              top: '50%',
+              transform: 'translateY(-50%) scaleX(-1)',
+              fontSize: 16,
+              color: 'rgba(255,255,255,0.45)',
+              pointerEvents: 'none',
+              userSelect: 'none',
+            }}
+          >
+            ✂
+          </span>
+        </div>
       </div>
 
       <div className="flex justify-end">
