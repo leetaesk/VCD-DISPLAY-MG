@@ -25,7 +25,6 @@ type Banner = { kind: BannerKind; msg: string } | null;
 function ProfilePage() {
   const profile = useProfileStore((s) => s.profile);
   const setProfile = useProfileStore((s) => s.setProfile);
-  const reset = useProfileStore((s) => s.reset);
   const [banner, setBanner] = useState<Banner>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -65,15 +64,6 @@ function ProfilePage() {
       if (importInputRef.current) importInputRef.current.value = '';
     };
     reader.readAsText(file);
-  };
-
-  const handleReset = () => {
-    const ok = window.confirm(
-      '⚠️ 모든 측정 데이터를 삭제합니다.\n\n이 작업은 되돌릴 수 없습니다.\n계속하시겠습니까?',
-    );
-    if (!ok) return;
-    reset();
-    flash('프로파일이 초기화되었습니다', 'ok');
   };
 
   return (
@@ -156,13 +146,11 @@ function ProfilePage() {
               }}
             />
           </label>
-          <Button onClick={handleReset} danger>
-            ⚠️ 초기화
-          </Button>
         </div>
         <p className="mt-2 text-xs text-text-dim">
           프로파일은 브라우저 localStorage(<code>{STORAGE_KEY}</code>)에 저장됩니다. 다른 기기로
           옮기려면 내보내기를 사용하세요. 가져오기는 기존 데이터를 완전히 덮어씁니다.
+          초기화는 사이드바 하단에서 가능합니다.
         </p>
       </Section>
 

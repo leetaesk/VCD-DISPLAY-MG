@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { ROUTES } from '@/constants/routes';
-import { useProfile } from '@/store/profileStore';
+import { useProfile, useProfileStore } from '@/store/profileStore';
 import type { VCDProfile } from '@/types/profile';
 
 /* ─────────────────────────────────────────────────────────
@@ -61,6 +61,17 @@ const GROUPS: NavGroup[] = [
 ];
 
 function SidebarContent({ profile, onNavigate }: { profile: VCDProfile; onNavigate?: () => void }) {
+  const reset = useProfileStore((s) => s.reset);
+
+  const handleReset = () => {
+    const ok = window.confirm(
+      '⚠️ 모든 측정 데이터를 삭제합니다.\n\n이 작업은 되돌릴 수 없습니다.\n계속하시겠습니까?',
+    );
+    if (!ok) return;
+    reset();
+    onNavigate?.();
+  };
+
   return (
     <>
       <div className="px-5 py-4 text-sm font-semibold tracking-widest text-accent">VCD</div>
@@ -104,6 +115,17 @@ function SidebarContent({ profile, onNavigate }: { profile: VCDProfile; onNaviga
           </div>
         ))}
       </nav>
+
+      <div className="border-t border-line p-2">
+        <button
+          type="button"
+          onClick={handleReset}
+          className="flex w-full items-center gap-2 rounded-md border border-err/30 bg-err/5 px-3 py-2 text-[13px] text-err transition-colors hover:bg-err/10"
+        >
+          <span aria-hidden>⚠️</span>
+          <span>프로파일 초기화</span>
+        </button>
+      </div>
     </>
   );
 }
