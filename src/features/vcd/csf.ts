@@ -1,22 +1,26 @@
 /* ─────────────────────────────────────────────────────────
-   csf.ts — CSF 도메인 로직 (staircase, classification).
-   순수 함수로만 구성 — DOM 무관.
-   원본: vcd-display/vcd-app/js/csf-test.js의 알고리즘 부분.
+   csf.ts — CSF 도메인 로직.
+
+   알고리즘: 단계적 하강법 (descending method of limits).
+   - CONTRAST_LEVELS 위→아래로 한 단계씩 내려가며 자극 제시.
+   - 정답: 다음 단계로 진행, 오답: 같은 단계 유지 (한 번 더 기회).
+   - 2회 연속 오답 → 즉시 종료, threshold = 마지막 정답 contrast.
+   - 최저 단계까지 모두 정답 → floor 도달, threshold = MIN_CONTRAST.
+
+   원본은 3-down/1-up adaptive였으나 trial 수가 너무 많아 사용자
+   체감이 무한 루프 같다는 피드백으로 단순한 하강법으로 교체.
    ───────────────────────────────────────────────────────── */
 import { CSF_FREQUENCIES_CPD } from '@/constants/vision';
 import type { CSFClassification } from '@/types/profile';
 
-export const INITIAL_CONTRAST = 0.5;
-export const MIN_CONTRAST = 0.002;
-export const MAX_CONTRAST = 1.0;
-export const STEP_COARSE = 2.0;
-export const STEP_FINE = Math.SQRT2;
-export const REVERSALS_NEEDED = 6;
-export const REVERSALS_TO_AVG = 4;
-export const DOWN_RUN_LENGTH = 3;
-// staircase가 6 reversal을 채우려면 최소 ~24 trial 필요 (3-down/1-up + √2 fine step).
-// 너무 낮추면 모든 주파수가 threshold 없이 강제 종료되어 CSF 곡선이 비게 됨.
-export const MAX_TRIALS_PER_FREQ = 25;
+// √2 간격으로 0.5 → 0.002까지 17단계
+export const CONTRAST_LEVELS: number[] = [
+  0.5, 0.354, 0.25, 0.177, 0.125, 0.088, 0.0625, 0.044, 0.0312, 0.0221,
+  0.0156, 0.011, 0.0078, 0.0055, 0.0039, 0.0028, 0.002,
+];
+export const MIN_CONTRAST = CONTRAST_LEVELS[CONTRAST_LEVELS.length - 1];
+export const MAX_CONTRAST = CONTRAST_LEVELS[0];
+export const WRONG_STREAK_TO_FINALIZE = 2;
 export const Z_FLAG_THRESHOLD = -2.5;
 
 export const NORMATIVE_LOG_MEAN: Record<number, number> = {
@@ -42,12 +46,13 @@ export interface Staircase {
   cpd: number;
   screenLimited: boolean;
   contrast: number;
-  lastDirection: 0 | -1 | 1;
-  correctStreak: number;
-  reversals: number[];
+  contrastIdx: number;
+  wrongStreak: number;
+  lastCorrectContrast: number | null;
   trials: { contrast: number; correct: boolean }[];
   finalized: boolean;
   threshold: number | null;
+  /** floor 도달(맨 아래 단계 통과)로 capped됨 — 사용자 sensitivity가 측정 floor 이하 */
   capped: boolean;
 }
 
@@ -55,10 +60,10 @@ export function freshStaircase(cpd: number, screenLimited: boolean): Staircase {
   return {
     cpd,
     screenLimited,
-    contrast: INITIAL_CONTRAST,
-    lastDirection: 0,
-    correctStreak: 0,
-    reversals: [],
+    contrast: CONTRAST_LEVELS[0],
+    contrastIdx: 0,
+    wrongStreak: 0,
+    lastCorrectContrast: null,
     trials: [],
     finalized: screenLimited,
     threshold: null,
@@ -79,41 +84,31 @@ export function staircaseStep(sc: Staircase, correct: boolean): Staircase {
   const next: Staircase = {
     ...sc,
     trials: [...sc.trials, { contrast: sc.contrast, correct }],
-    reversals: [...sc.reversals],
   };
-  const step = next.reversals.length < 2 ? STEP_COARSE : STEP_FINE;
 
   if (correct) {
-    next.correctStreak = sc.correctStreak + 1;
-    if (next.correctStreak >= DOWN_RUN_LENGTH) {
-      if (sc.lastDirection === +1) next.reversals.push(sc.contrast);
-      next.lastDirection = -1;
-      next.contrast = clamp(sc.contrast / step, MIN_CONTRAST, MAX_CONTRAST);
-      next.correctStreak = 0;
+    next.lastCorrectContrast = sc.contrast;
+    next.wrongStreak = 0;
+    next.contrastIdx = sc.contrastIdx + 1;
+    // 모든 단계 통과 → floor 도달, 사용자 threshold가 측정 floor 이하
+    if (next.contrastIdx >= CONTRAST_LEVELS.length) {
+      next.threshold = MIN_CONTRAST;
+      next.finalized = true;
+      next.capped = true;
+      return next;
     }
+    next.contrast = CONTRAST_LEVELS[next.contrastIdx];
   } else {
-    if (sc.lastDirection === -1) next.reversals.push(sc.contrast);
-    next.lastDirection = +1;
-    next.contrast = clamp(sc.contrast * step, MIN_CONTRAST, MAX_CONTRAST);
-    next.correctStreak = 0;
+    next.wrongStreak = sc.wrongStreak + 1;
+    // 2회 연속 오답 → 종료, threshold = 마지막 정답 contrast
+    if (next.wrongStreak >= WRONG_STREAK_TO_FINALIZE) {
+      next.threshold = next.lastCorrectContrast;
+      next.finalized = true;
+      return next;
+    }
+    // 오답이지만 streak < 2 → 같은 단계에서 재시도 (contrast 그대로)
   }
 
-  if (next.reversals.length >= REVERSALS_NEEDED) {
-    const last = next.reversals.slice(-REVERSALS_TO_AVG);
-    const logMean = last.reduce((s, c) => s + Math.log10(c), 0) / last.length;
-    next.threshold = Math.pow(10, logMean);
-    next.finalized = true;
-    return next;
-  }
-  if (next.trials.length >= MAX_TRIALS_PER_FREQ) {
-    if (next.reversals.length >= 2) {
-      const last = next.reversals.slice(-Math.min(REVERSALS_TO_AVG, next.reversals.length));
-      const logMean = last.reduce((s, c) => s + Math.log10(c), 0) / last.length;
-      next.threshold = Math.pow(10, logMean);
-      next.capped = true;
-    }
-    next.finalized = true;
-  }
   return next;
 }
 
@@ -122,7 +117,7 @@ export interface EyeResult {
   freqs: number[];
   thresholds: (number | null)[];
   sensitivities: (number | null)[];
-  reversals_used: number[][];
+  trials_used: number[];
   screen_limited: boolean[];
   confidence: number;
   classification: ClassificationResult | null;
@@ -144,30 +139,17 @@ export function aggregateEyeResult(
   const thresholds = freqs.map((f) => staircases[f]?.threshold ?? null);
   const sensitivities = thresholds.map((t) => (t === null ? null : 1 / t));
 
-  const usable = freqs.filter((f) => staircases[f]?.finalized && !staircases[f]?.screenLimited);
-  let conf = 0.45 + 0.07 * usable.length;
-  let varSum = 0;
-  let varN = 0;
-  for (const f of usable) {
-    const last = staircases[f].reversals.slice(-REVERSALS_TO_AVG);
-    if (last.length >= 2) {
-      const logs = last.map((c) => Math.log10(c));
-      const mean = logs.reduce((s, v) => s + v, 0) / logs.length;
-      const v = logs.reduce((s, x) => s + (x - mean) * (x - mean), 0) / logs.length;
-      varSum += v;
-      varN++;
-    }
-  }
-  if (varN > 0) {
-    conf -= Math.min(0.25, (varSum / varN) * 1.5);
-  }
+  // 측정 가능한 주파수 수 기반 신뢰도. 단계법은 trial이 적어 분산 기반 평가가
+  // 의미 없어서 단순 fraction-of-coverage로 대체.
+  const usable = freqs.filter((f) => staircases[f]?.threshold !== null && !staircases[f]?.screenLimited);
+  let conf = 0.5 + 0.06 * usable.length;
   conf = clamp(conf, 0.35, 0.95);
 
   return {
     freqs,
     thresholds,
     sensitivities,
-    reversals_used: freqs.map((f) => staircases[f]?.reversals.slice() ?? []),
+    trials_used: freqs.map((f) => staircases[f]?.trials.length ?? 0),
     screen_limited: freqs.map((f) => staircases[f]?.screenLimited ?? false),
     confidence: Math.round(conf * 100) / 100,
     classification: classify(freqs, sensitivities),

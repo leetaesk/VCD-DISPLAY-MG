@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import GateCalibration from '@/components/GateCalibration';
 import { CSF_FREQUENCIES_CPD, ROUTES } from '@/constants';
 import {
-  MAX_TRIALS_PER_FREQ,
-  REVERSALS_NEEDED,
+  CONTRAST_LEVELS,
+  WRONG_STREAK_TO_FINALIZE,
   aggregateEyeResult,
   freshStaircase,
   pxPerCycle,
@@ -87,12 +87,11 @@ function CsfFlow({
   const navigate = useNavigate();
   const feedbackTimer = useRef<number | null>(null);
 
-  // 새 trial 선택
+  // 새 trial 선택 — 주파수는 낮은 → 높은 순으로 순차 진행 (이전 random 점프 폐지)
   const pickNextTrial = useCallback(
     (scs: Record<number, Staircase>): Trial | null => {
-      const remaining = CSF_FREQUENCIES_CPD.filter((f) => !scs[f].finalized);
-      if (remaining.length === 0) return null;
-      const cpd = remaining[Math.floor(Math.random() * remaining.length)];
+      const cpd = CSF_FREQUENCIES_CPD.find((f) => !scs[f].finalized);
+      if (cpd === undefined) return null;
       return {
         cpd,
         contrast: scs[cpd].contrast,
@@ -273,7 +272,7 @@ function toStoredEye(r: EyeResult): CSFEye {
     freqs: r.freqs,
     thresholds: r.thresholds,
     sensitivities: r.sensitivities,
-    reversals_used: r.reversals_used.map((arr) => arr.length),
+    reversals_used: r.trials_used,
     screen_limited: r.screen_limited,
     confidence: r.confidence,
     classification:
@@ -354,14 +353,10 @@ function TestPhase({
   onQuit: () => void;
 }) {
   const finalizedCount = CSF_FREQUENCIES_CPD.filter((f) => staircases[f].finalized).length;
-  // 전체 trial 누적치 — interleaved staircase는 주파수가 매번 랜덤이라
-  // 주파수별 카운터를 보여주면 값이 들쭉날쭉 줄어드는 것처럼 보임.
-  // 전체 누적치는 monotone-increase 보장.
-  const totalTrials = CSF_FREQUENCIES_CPD.reduce(
-    (s, f) => s + (staircases[f]?.trials.length ?? 0),
-    0,
-  );
-  const totalMax = MAX_TRIALS_PER_FREQ * CSF_FREQUENCIES_CPD.length;
+  // 단계법: 현재 주파수의 contrast 단계 진행도. 정답 시 +1, 오답 시 같은 단계 유지.
+  const currentStep = (staircases[trial.cpd]?.contrastIdx ?? 0) + 1;
+  const totalSteps = CONTRAST_LEVELS.length;
+  const wrongStreak = staircases[trial.cpd]?.wrongStreak ?? 0;
 
   return (
     <section className="relative rounded-md border border-line bg-bg-elev p-5">
@@ -378,8 +373,13 @@ function TestPhase({
           </span>
         </div>
         <div className="font-mono text-text-dim">
-          <span className="text-text">{trial.cpd.toFixed(1)}</span> cpd ·{' '}
-          <span className="text-text">{totalTrials + 1}</span>/{totalMax}회
+          <span className="text-text">{trial.cpd.toFixed(1)}</span> cpd · 단계{' '}
+          <span className="text-text">{currentStep}</span>/{totalSteps}
+          {wrongStreak > 0 && (
+            <span className="ml-2 text-warn">
+              {wrongStreak}/{WRONG_STREAK_TO_FINALIZE} 오답
+            </span>
+          )}
         </div>
       </div>
 
@@ -559,15 +559,22 @@ function FreqProgressGrid({
         else if (sc.finalized) cls = 'border-ok/40 bg-ok/10 text-ok';
         else if (f === activeCpd) cls = 'border-accent bg-accent/10 text-accent';
         else if (sc.trials.length > 0) cls = 'border-line bg-bg-elev-2 text-text';
-        const pct = Math.min(100, (sc.reversals.length / REVERSALS_NEEDED) * 100);
+        const stepPct = sc.finalized
+          ? 100
+          : Math.min(100, (sc.contrastIdx / CONTRAST_LEVELS.length) * 100);
+        const label = sc.screenLimited
+          ? '한계'
+          : sc.finalized
+            ? '완료'
+            : `${sc.contrastIdx + 1}/${CONTRAST_LEVELS.length}`;
         return (
           <div key={f} className={['rounded-md border p-1.5 text-xs', cls].join(' ')}>
             <div className="flex justify-between font-mono">
               <span>{f}</span>
-              <span>{sc.screenLimited ? '한계' : `${sc.reversals.length}/${REVERSALS_NEEDED}`}</span>
+              <span>{label}</span>
             </div>
             <div className="mt-1 h-1 rounded-full bg-bg">
-              <div className="h-full rounded-full bg-current" style={{ width: `${pct}%` }} />
+              <div className="h-full rounded-full bg-current" style={{ width: `${stepPct}%` }} />
             </div>
           </div>
         );
