@@ -343,7 +343,7 @@ function FM100Phase({
           FM100은 양 끝(0, FM100_COUNT-1)이 고정이라 분할로 평가가 깨지지 않음. */}
       <div
         className="mb-4 grid grid-cols-8 gap-1 sm:grid-cols-[repeat(var(--fm100-cols),minmax(0,1fr))]"
-        style={{ ['--fm100-cols' as string]: FM100_COUNT }}
+        style={{ '--fm100-cols': FM100_COUNT } as React.CSSProperties}
       >
         {order.map((colorIdx, slot) => {
           const [r, g, b] = FM100_COLORS[colorIdx];
