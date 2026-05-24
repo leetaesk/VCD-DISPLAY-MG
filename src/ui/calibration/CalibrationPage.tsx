@@ -136,14 +136,15 @@ function Step1({ onNext }: { onNext: (ppi: number, widthMm: number) => void }) {
   const screenWidthMm = (window.screen.width / ppi) * 25.4;
 
   return (
-    <section className="rounded-md border border-line bg-bg-elev p-5">
+    <section className="rounded-md border border-line bg-bg-elev p-5 pb-28 md:pb-5">
       <h3 className="mb-2 text-lg font-semibold text-text">1단계 — 화면 PPI 측정</h3>
       <p className="mb-4 text-sm text-text-dim">
         실제 신용카드를 화면에 대고, 카드 <strong>오른쪽 절반</strong>이 파선과 맞도록
         슬라이더를 조절해 주세요.
       </p>
 
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      {/* 데스크탑: 인라인 슬라이더 + 출력. 모바일: 하단 고정바로 이동 */}
+      <div className="mb-4 hidden flex-wrap items-center gap-3 md:flex">
         <label className="flex items-center gap-2 text-sm text-text-dim">
           크기 조절
           <input
@@ -244,7 +245,8 @@ function Step1({ onNext }: { onNext: (ppi: number, widthMm: number) => void }) {
         </div>
       </div>
 
-      <div className="flex justify-end">
+      {/* 데스크탑: 인라인 다음 버튼 */}
+      <div className="hidden justify-end md:flex">
         <button
           type="button"
           onClick={() => onNext(ppi, screenWidthMm)}
@@ -252,6 +254,35 @@ function Step1({ onNext }: { onNext: (ppi: number, widthMm: number) => void }) {
         >
           다음 →
         </button>
+      </div>
+
+      {/* 모바일: 화면 하단 고정바 — 슬라이더가 항상 손에 닿게 */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg-elev/95 px-4 pt-3 backdrop-blur md:hidden"
+        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+      >
+        <input
+          type="range"
+          aria-label="카드 크기 조절"
+          min={80}
+          max={500}
+          step={1}
+          value={w}
+          onChange={(e) => setW(Number(e.target.value))}
+          className="mb-2 w-full"
+        />
+        <div className="flex items-center justify-between gap-3">
+          <output className="font-mono text-xs text-text-dim">
+            {w}px · {ppi.toFixed(1)} PPI
+          </output>
+          <button
+            type="button"
+            onClick={() => onNext(ppi, screenWidthMm)}
+            className="min-h-11 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-bg hover:bg-accent-2"
+          >
+            다음 →
+          </button>
+        </div>
       </div>
     </section>
   );
