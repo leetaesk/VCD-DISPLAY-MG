@@ -319,6 +319,7 @@ function DemoSection({
   const psfRef = useRef<HTMLCanvasElement | null>(null);
   const restoredRef = useRef<HTMLCanvasElement | null>(null);
   const diffRef = useRef<HTMLCanvasElement | null>(null);
+  const [runError, setRunError] = useState<Error | null>(null);
 
   // 데모 데이터 준비 — 한 번만
   const dataRef = useRef<{
@@ -343,30 +344,45 @@ function DemoSection({
     drawPSFShifted(psfRef.current!, psf, N);
   }, []);
 
-  // K 바뀔 때마다 Wiener 재실행
+  // K 바뀔 때마다 Wiener 재실행. GPU 호출이 던지면 ErrorBoundary로 새지 않게
+  // 로컬 state로 잡아서 페이지에 표시.
   useEffect(() => {
     const d = dataRef.current;
     if (!d) return;
     const gl = ctx.gl;
-    const fblurTex = makeComplexTexture(gl, N, packComplexToRGBA(d.F_blur, N));
-    const hTex = makeComplexTexture(gl, N, packComplexToRGBA(d.H, N));
-    const restoredTex = pipeline.wiener(fblurTex, hTex, K, N);
-    const G = readComplex(gl, restoredTex, N);
-    gl.deleteTexture(restoredTex);
-    gl.deleteTexture(fblurTex);
-    gl.deleteTexture(hTex);
-    const restored = cpuFFT2D(G, N, true);
-    drawComplexReal(restoredRef.current!, restored, N);
-    const diff = new Float32Array(N * N * 2);
-    for (let i = 0; i < N * N; i++) {
-      diff[i * 2] = Math.abs(d.original[i * 2] - restored[i * 2]);
+    try {
+      const fblurTex = makeComplexTexture(gl, N, packComplexToRGBA(d.F_blur, N));
+      const hTex = makeComplexTexture(gl, N, packComplexToRGBA(d.H, N));
+      const restoredTex = pipeline.wiener(fblurTex, hTex, K, N);
+      const G = readComplex(gl, restoredTex, N);
+      gl.deleteTexture(restoredTex);
+      gl.deleteTexture(fblurTex);
+      gl.deleteTexture(hTex);
+      const restored = cpuFFT2D(G, N, true);
+      drawComplexReal(restoredRef.current!, restored, N);
+      const diff = new Float32Array(N * N * 2);
+      for (let i = 0; i < N * N; i++) {
+        diff[i * 2] = Math.abs(d.original[i * 2] - restored[i * 2]);
+      }
+      drawComplexReal(diffRef.current!, diff, N, 4);
+      setRunError(null);
+    } catch (e) {
+      setRunError(e instanceof Error ? e : new Error(String(e)));
     }
-    drawComplexReal(diffRef.current!, diff, N, 4);
   }, [K, pipeline, ctx]);
 
   return (
     <section className="rounded-md border border-line bg-bg-elev p-5">
       <h3 className="mb-3 text-lg font-semibold text-text">Wiener 복원 데모</h3>
+      {runError && (
+        <div className="mb-4 rounded-md border border-err/40 bg-err/5 p-3 text-sm">
+          <div className="mb-1 font-semibold text-err">GPU 실행 실패</div>
+          <p className="text-text">{runError.message}</p>
+          <p className="mt-1 text-xs text-text-dim">
+            보정 파이프라인을 실행할 수 없는 환경입니다. 데스크탑 브라우저에서 다시 시도해 주세요.
+          </p>
+        </div>
+      )}
       <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-5">
         <CanvasFig caption="원본" cvRef={origRef} />
         <CanvasFig caption={`Gaussian PSF σ=${SIGMA}`} cvRef={psfRef} />

@@ -51,10 +51,14 @@ export function createGLContext(canvas: HTMLCanvasElement): GLContext {
 
   // 실제로 RGBA32F FBO가 완성되는지 프로브 — iOS Safari는 확장은 노출하지만
   // 실제 FBO 검사에서 GL_FRAMEBUFFER_UNSUPPORTED(0x8CDD)를 반환하는 경우가 있음.
-  if (!probeFloatFBO(gl)) {
-    throw new Error(
-      '이 기기는 RGBA32F 프레임버퍼를 실제로 생성하지 못합니다 (iOS Safari 등). 데스크탑 브라우저에서 다시 시도해 주세요.',
-    );
+  // 256×256까지 검사 — 앱에서 가장 큰 사이즈는 Preview/Camera의 256.
+  // 4×4만 통과하고 64×64에서 막히는 모바일 GPU도 있어 실제 사용 크기로 확인.
+  for (const probeN of [64, 256]) {
+    if (!probeFloatFBO(gl, probeN)) {
+      throw new Error(
+        `이 기기는 ${probeN}×${probeN} RGBA32F 프레임버퍼를 만들지 못합니다. 보정 파이프라인이 동작하려면 데스크탑 Chrome/Firefox/Edge가 필요합니다.`,
+      );
+    }
   }
 
   const quad = gl.createBuffer();
@@ -75,7 +79,7 @@ export function createGLContext(canvas: HTMLCanvasElement): GLContext {
   };
 }
 
-function probeFloatFBO(gl: WebGL2RenderingContext): boolean {
+function probeFloatFBO(gl: WebGL2RenderingContext, N: number): boolean {
   const tex = gl.createTexture();
   const fbo = gl.createFramebuffer();
   if (!tex || !fbo) return false;
@@ -83,7 +87,7 @@ function probeFloatFBO(gl: WebGL2RenderingContext): boolean {
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 4, 4, 0, gl.RGBA, gl.FLOAT, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, N, N, 0, gl.RGBA, gl.FLOAT, null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
     return gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
