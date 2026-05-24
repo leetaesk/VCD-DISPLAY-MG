@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import GateCalibration from '@/components/GateCalibration';
 import { CSF_FREQUENCIES_CPD, ROUTES } from '@/constants';
 import {
+  MAX_TRIALS_PER_FREQ,
   REVERSALS_NEEDED,
   aggregateEyeResult,
   freshStaircase,
@@ -25,8 +26,9 @@ import CSFChart from './CSFChart';
    원본: csf-test.js + page-csf template.
    ───────────────────────────────────────────────────────── */
 
-const BOX_PX = 240;
-const FEEDBACK_MS = 220;
+const BOX_PX_MAX = 240;
+const BOX_PX_MIN = 120;
+const FEEDBACK_MS = 180;
 
 type Phase = 'intro' | 'test' | 'test_preview' | 'combined';
 
@@ -352,6 +354,7 @@ function TestPhase({
   onQuit: () => void;
 }) {
   const finalizedCount = CSF_FREQUENCIES_CPD.filter((f) => staircases[f].finalized).length;
+  const currentTrialIdx = (staircases[trial.cpd]?.trials.length ?? 0) + 1;
 
   return (
     <section className="relative rounded-md border border-line bg-bg-elev p-5">
@@ -368,19 +371,18 @@ function TestPhase({
           </span>
         </div>
         <div className="font-mono text-text-dim">
-          현재 <span className="text-text">{trial.cpd.toFixed(1)}</span> cpd · 대비{' '}
-          <span className="text-text">{(trial.contrast * 100).toFixed(1)}%</span>
+          <span className="text-text">{trial.cpd.toFixed(1)}</span> cpd ·{' '}
+          <span className="text-text">{currentTrialIdx}</span>/{MAX_TRIALS_PER_FREQ}회
         </div>
       </div>
 
-      {/* 격자 박스(BOX_PX=240) × 2는 모바일 폭을 넘으므로 가로 스크롤 허용.
-          크기 자체는 cycles-per-degree 평가에 직결되므로 축소하지 않음. */}
-      <div className="mb-4 -mx-4 overflow-x-auto sm:mx-0">
-        <div className="flex min-w-max items-center justify-center gap-6 px-4 sm:px-0">
-          <GratingBox cpd={trial.cpd} contrast={trial.contrast} side="left" trial={trial} calib={calib} />
-          <span className="text-2xl text-text-dim">+</span>
-          <GratingBox cpd={trial.cpd} contrast={trial.contrast} side="right" trial={trial} calib={calib} />
-        </div>
+      {/* 격자 박스 × 2 — 가용 폭에 맞춰 BOX_PX_MIN~MAX 사이로 자동 조절.
+          픽셀-사이클 비율(cpd)은 drawGrating에서 calib 기반으로 계산되므로
+          박스 크기를 줄여도 cycles-per-degree 정확도는 유지됨. */}
+      <div className="mb-4 flex items-center justify-center gap-3">
+        <GratingBox cpd={trial.cpd} contrast={trial.contrast} side="left" trial={trial} calib={calib} />
+        <span className="text-2xl text-text-dim">+</span>
+        <GratingBox cpd={trial.cpd} contrast={trial.contrast} side="right" trial={trial} calib={calib} />
       </div>
 
       <p className="mb-3 text-center text-sm text-text-dim">어느 쪽에 줄무늬가 있나요?</p>
@@ -470,43 +472,63 @@ function GratingBox({
   trial: Trial;
   calib: Calibration;
 }) {
+  const wrapRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [size, setSize] = useState(BOX_PX_MAX);
+
+  // 컨테이너 폭에 맞춰 박스 크기를 BOX_PX_MIN~MAX로 적응
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const w = Math.round(entry.contentRect.width);
+      setSize(Math.max(BOX_PX_MIN, Math.min(BOX_PX_MAX, w)));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   useEffect(() => {
     const cv = canvasRef.current;
     if (!cv) return;
-    cv.width = cv.height = BOX_PX;
+    cv.width = cv.height = size;
     const ctx = cv.getContext('2d');
     if (!ctx) return;
     if (trial.gratingSide === side) {
-      drawGrating(ctx, cpd, contrast, calib);
+      drawGrating(ctx, size, cpd, contrast, calib);
     } else {
       ctx.fillStyle = 'rgb(128,128,128)';
-      ctx.fillRect(0, 0, BOX_PX, BOX_PX);
+      ctx.fillRect(0, 0, size, size);
     }
-  }, [cpd, contrast, side, trial.gratingSide, calib]);
+  }, [size, cpd, contrast, side, trial.gratingSide, calib]);
+
   return (
-    <div className="rounded-md border border-line bg-black p-1">
-      <canvas ref={canvasRef} />
+    <div
+      ref={wrapRef}
+      className="aspect-square w-full max-w-[240px] flex-1 rounded-md border border-line bg-black p-1"
+    >
+      <canvas ref={canvasRef} className="block h-full w-full" />
     </div>
   );
 }
 
 function drawGrating(
   ctx: CanvasRenderingContext2D,
+  N: number,
   cpd: number,
   contrast: number,
   calib: Calibration,
 ) {
-  const img = ctx.createImageData(BOX_PX, BOX_PX);
+  const img = ctx.createImageData(N, N);
   const data = img.data;
   const pxPerCyc = pxPerCycle(cpd, calib.viewing_distance_cm, calib.screen_ppi);
   const k = (2 * Math.PI) / pxPerCyc;
   const halfC = contrast * 0.5;
-  for (let x = 0; x < BOX_PX; x++) {
-    const v = 0.5 + halfC * Math.cos(k * (x - BOX_PX / 2));
+  for (let x = 0; x < N; x++) {
+    const v = 0.5 + halfC * Math.cos(k * (x - N / 2));
     const g = Math.max(0, Math.min(255, Math.round(v * 255)));
-    for (let y = 0; y < BOX_PX; y++) {
-      const i = (y * BOX_PX + x) * 4;
+    for (let y = 0; y < N; y++) {
+      const i = (y * N + x) * 4;
       data[i] = data[i + 1] = data[i + 2] = g;
       data[i + 3] = 255;
     }

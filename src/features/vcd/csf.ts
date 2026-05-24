@@ -14,7 +14,7 @@ export const STEP_FINE = Math.SQRT2;
 export const REVERSALS_NEEDED = 6;
 export const REVERSALS_TO_AVG = 4;
 export const DOWN_RUN_LENGTH = 3;
-export const MAX_TRIALS_PER_FREQ = 25;
+export const MAX_TRIALS_PER_FREQ = 18;
 export const Z_FLAG_THRESHOLD = -2.5;
 
 export const NORMATIVE_LOG_MEAN: Record<number, number> = {
