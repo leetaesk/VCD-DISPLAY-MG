@@ -14,7 +14,9 @@ export const STEP_FINE = Math.SQRT2;
 export const REVERSALS_NEEDED = 6;
 export const REVERSALS_TO_AVG = 4;
 export const DOWN_RUN_LENGTH = 3;
-export const MAX_TRIALS_PER_FREQ = 18;
+// staircase가 6 reversal을 채우려면 최소 ~24 trial 필요 (3-down/1-up + √2 fine step).
+// 너무 낮추면 모든 주파수가 threshold 없이 강제 종료되어 CSF 곡선이 비게 됨.
+export const MAX_TRIALS_PER_FREQ = 25;
 export const Z_FLAG_THRESHOLD = -2.5;
 
 export const NORMATIVE_LOG_MEAN: Record<number, number> = {
