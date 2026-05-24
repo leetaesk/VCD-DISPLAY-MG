@@ -125,10 +125,7 @@ function Stepper({ current }: { current: Step }) {
 // ── Step 1: PPI via half credit card ──────────────────
 function Step1({ onNext }: { onNext: (ppi: number, widthMm: number) => void }) {
   const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  const initial = Math.min(
-    500,
-    Math.max(80, Math.round((HALF_CARD_W_MM * (96 * dpr)) / 25.4)),
-  );
+  const initial = Math.min(500, Math.max(80, Math.round((HALF_CARD_W_MM * (96 * dpr)) / 25.4)));
   const [w, setW] = useState(initial);
 
   const h = w * HALF_CARD_H_RATIO;
@@ -139,8 +136,8 @@ function Step1({ onNext }: { onNext: (ppi: number, widthMm: number) => void }) {
     <section className="rounded-md border border-line bg-bg-elev p-5 pb-28 md:pb-5">
       <h3 className="mb-2 text-lg font-semibold text-text">1단계 — 화면 PPI 측정</h3>
       <p className="mb-4 text-sm text-text-dim">
-        실제 신용카드를 화면에 대고, 카드 <strong>오른쪽 절반</strong>이 파선과 맞도록
-        슬라이더를 조절해 주세요.
+        실제 신용카드를 화면에 대고, 카드 <strong>높이</strong>가 파선과 맞도록 슬라이더를 조절해
+        주세요.
       </p>
 
       {/* 데스크탑: 인라인 슬라이더 + 출력. 모바일: 하단 고정바로 이동 */}
@@ -172,76 +169,74 @@ function Step1({ onNext }: { onNext: (ppi: number, widthMm: number) => void }) {
             style={{
               width: `${w}px`,
               height: `${h}px`,
-            background: 'linear-gradient(315deg, #3a4254 0%, #25293a 100%)',
-            border: '1px solid #4a5169',
-            borderLeft: '2px dashed rgba(255,255,255,0.35)',
-            borderRadius: '0 10px 10px 0',
-            boxShadow:
-              'inset 0 0 0 1px rgba(255,255,255,0.04), 0 6px 18px rgba(0,0,0,0.35)',
-          }}
-        >
-          {/* IC chip — ISO 7816 비율 (≈ 12×8mm, 카드 전폭 대비 14% × 14.8%) */}
-          <span
-            aria-hidden
-            style={{
-              position: 'absolute',
-              // half-card 폭(42.8mm)에서 chip 가로(12mm) → 28%, 카드 좌측에서 17mm → 우측 기준 12mm/42.8 → 28%
-              right: '14%',
-              top: '15%',
-              width: '28%',
-              // 카드 세로(53.98mm) 대비 chip 세로(8mm) → 14.8%
-              aspectRatio: '12 / 8',
-              background:
-                'linear-gradient(135deg, #e8c558 0%, #c79a30 55%, #8c6a1d 100%)',
-              borderRadius: 3,
-              boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.25)',
-              opacity: 0.85,
+              background: 'linear-gradient(315deg, #3a4254 0%, #25293a 100%)',
+              border: '1px solid #4a5169',
+              borderLeft: '2px dashed rgba(255,255,255,0.35)',
+              borderRadius: '0 10px 10px 0',
+              boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.04), 0 6px 18px rgba(0,0,0,0.35)',
             }}
           >
-            {/* chip 내부 contact 라인 — 가로 2줄 */}
+            {/* IC chip — ISO 7816 비율 (≈ 12×8mm, 카드 전폭 대비 14% × 14.8%) */}
             <span
               aria-hidden
               style={{
                 position: 'absolute',
-                inset: '22% 12%',
-                borderTop: '1px solid rgba(0,0,0,0.35)',
-                borderBottom: '1px solid rgba(0,0,0,0.35)',
+                // half-card 폭(42.8mm)에서 chip 가로(12mm) → 28%, 카드 좌측에서 17mm → 우측 기준 12mm/42.8 → 28%
+                right: '14%',
+                top: '15%',
+                width: '28%',
+                // 카드 세로(53.98mm) 대비 chip 세로(8mm) → 14.8%
+                aspectRatio: '12 / 8',
+                background: 'linear-gradient(135deg, #e8c558 0%, #c79a30 55%, #8c6a1d 100%)',
+                borderRadius: 3,
+                boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.25)',
+                opacity: 0.85,
+              }}
+            >
+              {/* chip 내부 contact 라인 — 가로 2줄 */}
+              <span
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  inset: '22% 12%',
+                  borderTop: '1px solid rgba(0,0,0,0.35)',
+                  borderBottom: '1px solid rgba(0,0,0,0.35)',
+                }}
+              />
+            </span>
+
+            {/* 카드 번호 자리 흔적 — 반쪽이라 오른쪽 4자리만 보이게 (얇은 4묶음 라인) */}
+            <span
+              aria-hidden
+              style={{
+                position: 'absolute',
+                left: '12%',
+                right: '10%',
+                bottom: '30%',
+                height: '6%',
+                background:
+                  'repeating-linear-gradient(90deg, rgba(255,255,255,0.18) 0 10%, transparent 10% 14%)',
+                borderRadius: 2,
               }}
             />
-          </span>
 
-          {/* 카드 번호 자리 흔적 — 반쪽이라 오른쪽 4자리만 보이게 (얇은 4묶음 라인) */}
-          <span
-            aria-hidden
-            style={{
-              position: 'absolute',
-              left: '12%',
-              right: '10%',
-              bottom: '30%',
-              height: '6%',
-              background:
-                'repeating-linear-gradient(90deg, rgba(255,255,255,0.18) 0 10%, transparent 10% 14%)',
-              borderRadius: 2,
-            }}
-          />
-
-          {/* 절단선 표시 (왼쪽 가장자리 가위) */}
-          <span
-            aria-hidden
-            style={{
-              position: 'absolute',
-              left: -18,
-              top: '50%',
-              transform: 'translateY(-50%) scaleX(-1)',
-              fontSize: 16,
-              color: 'rgba(255,255,255,0.45)',
-              pointerEvents: 'none',
-              userSelect: 'none',
-            }}
-          >
-            ✂
-          </span>
-        </div>
+            {/* 절단선 표시 (왼쪽 가장자리 가위) */}
+            <span
+              aria-hidden
+              style={{
+                position: 'absolute',
+                left: -18,
+                top: '50%',
+                transform: 'translateY(-50%) scaleX(-1)',
+                fontSize: 16,
+                color: 'rgba(255,255,255,0.45)',
+                pointerEvents: 'none',
+                userSelect: 'none',
+              }}
+            >
+              ✂
+            </span>
+          </div>
         </div>
       </div>
 
@@ -432,9 +427,7 @@ function Step2({
       )}
       {tracker.status === 'error' && (
         <ErrorCard
-          message={
-            tracker.error?.message ?? 'FaceLandmarker 초기화에 실패했습니다.'
-          }
+          message={tracker.error?.message ?? 'FaceLandmarker 초기화에 실패했습니다.'}
           onSwitchManual={() => setManualMode(true)}
         />
       )}
@@ -457,10 +450,7 @@ function Step2({
 
         <div className="flex flex-col gap-2 text-sm">
           <Readout label="IPD" value={ipdPx ? `${ipdPx.toFixed(1)} px` : '--'} />
-          <Readout
-            label="거리"
-            value={stableCm ? `${stableCm.toFixed(1)} cm` : '--'}
-          />
+          <Readout label="거리" value={stableCm ? `${stableCm.toFixed(1)} cm` : '--'} />
           <Readout
             label="샘플"
             value={`${sampleCount}${ready ? ' ✓' : ` / ${MIN_SAMPLES_TO_SAVE}`}`}
@@ -534,13 +524,7 @@ function Readout({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ErrorCard({
-  message,
-  onSwitchManual,
-}: {
-  message: string;
-  onSwitchManual: () => void;
-}) {
+function ErrorCard({ message, onSwitchManual }: { message: string; onSwitchManual: () => void }) {
   return (
     <div className="mb-3 rounded-md border border-err/40 bg-err/5 p-3">
       <div className="mb-1 text-sm font-semibold text-err">카메라를 시작할 수 없습니다</div>
@@ -573,29 +557,99 @@ function statusLabel(s: 'idle' | 'loading' | 'running' | 'error'): string {
 function Step3({ onRedo }: { onRedo: () => void }) {
   const profile = useProfileStore((s) => s.profile);
   const navigate = useNavigate();
+  const c = profile.calibration;
+
+  if (!c) {
+    return (
+      <section className="rounded-md border border-line bg-bg-elev p-5">
+        <p className="text-sm text-text-dim">측정 데이터가 없습니다. 1단계부터 다시 진행해 주세요.</p>
+      </section>
+    );
+  }
+
+  const screenWidthCm = c.screen_width_mm / 10;
+  const distanceLabel =
+    c.distance_source === 'mediapipe_ipd' ? '얼굴 인식 자동 측정' : '직접 입력';
+  const dateLabel = new Date(c.calibration_timestamp).toLocaleString('ko-KR');
+
   return (
     <section className="rounded-md border border-line bg-bg-elev p-5">
-      <h3 className="mb-2 text-lg font-semibold text-text">3단계 — 확인</h3>
-      <pre className="mb-4 overflow-x-auto rounded-md bg-bg-elev-2 p-3 font-mono text-xs text-text">
-        {JSON.stringify(profile.calibration ?? {}, null, 2)}
-      </pre>
+      <h3 className="mb-1 text-lg font-semibold text-text">3단계 — 측정 결과 확인</h3>
+      <p className="mb-4 text-sm text-text-dim">
+        측정된 값이 실제와 비슷한지 확인해 주세요. 차이가 크다면 다시 측정할 수 있습니다.
+      </p>
+
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <ResultCard
+          icon="📐"
+          title="화면 크기"
+          primary={`${screenWidthCm.toFixed(1)} cm 폭`}
+          hint={`이 모니터의 가로 길이입니다. 자(尺)로 재면 비슷한 값이 나와야 해요.`}
+          detail={`해상도 1 cm당 ${(c.screen_ppi / 2.54).toFixed(0)}픽셀 (PPI ${c.screen_ppi})`}
+        />
+        <ResultCard
+          icon="👁️"
+          title="시청 거리"
+          primary={`${c.viewing_distance_cm} cm`}
+          hint={`눈에서 화면까지의 거리입니다. 평소 보던 자세에서 이 정도면 맞아요.`}
+          detail={`측정 방법: ${distanceLabel}`}
+        />
+      </div>
+
+      <div className="mb-4 rounded-md border border-accent/30 bg-accent/5 p-3 text-sm text-text">
+        <p className="mb-1">
+          ✅ 이제 <strong>{screenWidthCm.toFixed(1)} cm</strong> 폭 화면을{' '}
+          <strong>{c.viewing_distance_cm} cm</strong> 거리에서 본다는 기준으로 모든 검사가
+          진행됩니다.
+        </p>
+        <p className="text-xs text-text-dim">측정 시각: {dateLabel}</p>
+      </div>
+
       <div className="flex flex-wrap justify-end gap-2">
         <button
           type="button"
           onClick={onRedo}
-          className="rounded-md border border-line bg-bg-elev-2 px-3 py-1.5 text-sm hover:border-accent"
+          className="min-h-11 rounded-md border border-line bg-bg-elev-2 px-3 py-1.5 text-sm hover:border-accent"
         >
           다시 측정
         </button>
         <button
           type="button"
           onClick={() => navigate(ROUTES.refraction)}
-          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-bg hover:bg-accent-2"
+          className="min-h-11 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-bg hover:bg-accent-2"
         >
           완료 → 굴절 검사 시작
         </button>
       </div>
     </section>
+  );
+}
+
+function ResultCard({
+  icon,
+  title,
+  primary,
+  hint,
+  detail,
+}: {
+  icon: string;
+  title: string;
+  primary: string;
+  hint: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-md border border-line bg-bg-elev-2 p-4">
+      <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-text">
+        <span aria-hidden className="text-base">
+          {icon}
+        </span>
+        {title}
+      </div>
+      <div className="mb-2 font-mono text-2xl text-accent">{primary}</div>
+      <p className="mb-2 text-sm text-text">{hint}</p>
+      <p className="text-xs text-text-dim">{detail}</p>
+    </div>
   );
 }
 
