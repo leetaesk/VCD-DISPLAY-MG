@@ -50,7 +50,7 @@ function PreviewPage() {
 
   if (!hasRefraction(profile)) {
     return (
-      <div className="mx-auto max-w-2xl p-6">
+      <div className="mx-auto max-w-2xl p-4 sm:p-6">
         <div className="rounded-md border border-warn/40 bg-warn/5 p-5">
           <h3 className="mb-2 text-lg font-semibold text-warn">
             🔭 굴절 검사가 먼저 필요합니다
@@ -192,7 +192,7 @@ function PreviewApp({ profile }: { profile: VCDProfile }) {
   const improvement = errNoVCD > 0 ? (1 - errWithVCD / errNoVCD) * 100 : 0;
 
   return (
-    <div className="mx-auto max-w-5xl p-6">
+    <div className="mx-auto max-w-5xl p-4 sm:p-6">
       <canvas ref={glCanvasRef} hidden />
       <header className="mb-4 flex items-baseline justify-between">
         <h2 className="text-2xl font-semibold text-text">VCD 미리보기</h2>

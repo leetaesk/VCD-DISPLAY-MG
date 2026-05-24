@@ -77,7 +77,7 @@ function ProfilePage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl p-6">
+    <div className="mx-auto max-w-5xl p-4 sm:p-6">
       <header className="mb-4">
         <h2 className="text-2xl font-semibold text-text">시력 프로파일</h2>
         <p className="text-text-dim">측정된 데이터와 도출된 광학 특성을 한 화면에서 확인합니다.</p>

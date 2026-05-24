@@ -83,7 +83,7 @@ function ColorPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
+    <div className="mx-auto max-w-4xl p-4 sm:p-6">
       <header className="mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-text">색각 검사</h2>
         <span className="rounded-md border border-accent/40 bg-accent/10 px-2 py-0.5 text-xs text-accent">
@@ -224,7 +224,10 @@ function IshiharaPhase({
       </div>
 
       <div className="mb-4 flex justify-center">
-        <canvas ref={canvasRef} className="rounded-full" />
+        <canvas
+          ref={canvasRef}
+          className="aspect-square w-full max-w-90 rounded-full"
+        />
       </div>
 
       <p className="mb-3 text-center text-sm text-text">점 패턴 안에 어떤 숫자가 보이나요?</p>
@@ -255,9 +258,9 @@ function IshiharaPhase({
 }
 
 function drawIshiharaPlate(canvas: HTMLCanvasElement, plate: Plate) {
+  // 내부 해상도는 360 고정 (점 분포 알고리즘 의존), CSS는 aspect-square로 축소 허용.
   const SIZE = 360;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
-  canvas.style.width = canvas.style.height = SIZE + 'px';
   canvas.width = canvas.height = SIZE * dpr;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;

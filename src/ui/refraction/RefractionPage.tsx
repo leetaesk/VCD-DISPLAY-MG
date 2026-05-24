@@ -236,7 +236,7 @@ function RefractionPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
+    <div className="mx-auto max-w-4xl p-4 sm:p-6">
       <header className="mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-text">굴절 추정</h2>
         <span className="rounded-md border border-accent/40 bg-accent/10 px-2 py-0.5 text-xs text-accent">
@@ -551,7 +551,8 @@ function StageBPhase({
         됩니다.
       </p>
 
-      <div className="mb-4 flex flex-col items-center gap-3">
+      {/* 320px 부채꼴은 모바일 폭을 살짝 넘을 수 있어 가로 스크롤 허용 */}
+      <div className="mb-4 -mx-4 flex flex-col items-center gap-3 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
         <canvas
           ref={fanRef}
           onClick={onCanvasClick}
@@ -651,7 +652,11 @@ function AxisPairPreview({ axisDeg, calib }: { axisDeg: number; calib: Calibrati
     drawBar(cv.width * 0.25, cv.height * 0.4, axisDeg, `선택 ${axisDeg}°`);
     drawBar(cv.width * 0.75, cv.height * 0.4, (axisDeg + 90) % 180, `직교 ${(axisDeg + 90) % 180}°`);
   }, [axisDeg, calib]);
-  return <canvas ref={cvRef} className="mt-2" />;
+  return (
+    <div className="-mx-3 mt-2 overflow-x-auto sm:mx-0">
+      <canvas ref={cvRef} className="block" />
+    </div>
+  );
 }
 
 function drawFan(canvas: HTMLCanvasElement, dpr: number, selectedDeg: number | null) {

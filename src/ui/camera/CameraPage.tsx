@@ -49,7 +49,7 @@ function CameraPage() {
   const profile = useProfileStore((s) => s.profile);
   if (!hasRefraction(profile)) {
     return (
-      <div className="mx-auto max-w-2xl p-6">
+      <div className="mx-auto max-w-2xl p-4 sm:p-6">
         <div className="rounded-md border border-warn/40 bg-warn/5 p-5">
           <h3 className="mb-2 text-lg font-semibold text-warn">🔭 굴절 검사가 먼저 필요합니다</h3>
           <p className="mb-3 text-sm text-text">
@@ -317,7 +317,7 @@ function CameraApp({ profile }: { profile: VCDProfile }) {
   }, [applyVCD, binocular, binocularEligible, tracker.status]);
 
   return (
-    <div className="mx-auto max-w-5xl p-6">
+    <div className="mx-auto max-w-5xl p-4 sm:p-6">
       <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-2xl font-semibold text-text">
           카메라 보정{' '}

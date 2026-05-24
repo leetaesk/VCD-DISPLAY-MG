@@ -122,7 +122,7 @@ function AmslerFlow({
   };
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
+    <div className="mx-auto max-w-4xl p-4 sm:p-6">
       <header className="mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-text">Amsler 시야 검사</h2>
         <span className="rounded-md border border-accent/40 bg-accent/10 px-2 py-0.5 text-xs text-accent">
@@ -424,21 +424,25 @@ function TestPhase({
         {fovDeg.toFixed(1)}° 시야
       </p>
 
-      <div
-        className="relative mx-auto mb-3 border border-line"
-        style={{ width: displayPx, height: displayPx }}
-      >
-        <canvas ref={gridRef} className="absolute inset-0" />
-        <canvas
-          ref={overlayRef}
-          className="absolute inset-0 cursor-crosshair"
-          style={{ touchAction: 'none' }}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerEnd}
-          onPointerCancel={onPointerEnd}
-          onPointerLeave={onPointerEnd}
-        />
+      {/* 격자는 시청거리·PPI 기반 시야각을 표현하므로 축소 금지.
+          모바일에서 폭 초과 시 가로 스크롤. */}
+      <div className="-mx-4 mb-3 overflow-x-auto sm:mx-0">
+        <div
+          className="relative mx-auto border border-line"
+          style={{ width: displayPx, height: displayPx }}
+        >
+          <canvas ref={gridRef} className="absolute inset-0" />
+          <canvas
+            ref={overlayRef}
+            className="absolute inset-0 cursor-crosshair"
+            style={{ touchAction: 'none' }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerEnd}
+            onPointerCancel={onPointerEnd}
+            onPointerLeave={onPointerEnd}
+          />
+        </div>
       </div>
 
       <div className="flex justify-center gap-2">

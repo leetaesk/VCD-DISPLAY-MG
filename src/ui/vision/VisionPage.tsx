@@ -180,7 +180,7 @@ function VisionPage() {
   const screenFloor = currentScreenFloor(calib);
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
+    <div className="mx-auto max-w-4xl p-4 sm:p-6">
       <header className="mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-text">LogMAR 시력 검사</h2>
         <span className="rounded-md border border-accent/40 bg-accent/10 px-2 py-0.5 text-xs text-accent">
@@ -479,8 +479,12 @@ function TestPhase({
         <span className="font-mono">{logmarToSnellen(sc.currentLogMAR)}</span>
       </div>
 
-      <div className="mb-4 flex justify-center rounded-md border border-line bg-white p-3">
-        <canvas ref={canvasRef} />
+      {/* 글자 캔버스는 PPI·시청거리 기반 mm로 그려지므로 축소 금지.
+          모바일에서 폭 초과 시 가로 스크롤. */}
+      <div className="mb-4 -mx-4 overflow-x-auto sm:mx-0">
+        <div className="mx-4 flex justify-center rounded-md border border-line bg-white p-3 sm:mx-0">
+          <canvas ref={canvasRef} />
+        </div>
       </div>
 
       <div className="mb-3 text-center font-mono text-2xl tracking-[0.5em] text-text">

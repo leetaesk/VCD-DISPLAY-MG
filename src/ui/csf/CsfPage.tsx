@@ -185,7 +185,7 @@ function CsfFlow({
   );
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
+    <div className="mx-auto max-w-4xl p-4 sm:p-6">
       <header className="mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-text">대비 민감도 (CSF) 검사</h2>
         <span className="rounded-md border border-accent/40 bg-accent/10 px-2 py-0.5 text-xs text-accent">
@@ -373,10 +373,14 @@ function TestPhase({
         </div>
       </div>
 
-      <div className="mb-4 flex items-center justify-center gap-6">
-        <GratingBox cpd={trial.cpd} contrast={trial.contrast} side="left" trial={trial} calib={calib} />
-        <span className="text-2xl text-text-dim">+</span>
-        <GratingBox cpd={trial.cpd} contrast={trial.contrast} side="right" trial={trial} calib={calib} />
+      {/* 격자 박스(BOX_PX=240) × 2는 모바일 폭을 넘으므로 가로 스크롤 허용.
+          크기 자체는 cycles-per-degree 평가에 직결되므로 축소하지 않음. */}
+      <div className="mb-4 -mx-4 overflow-x-auto sm:mx-0">
+        <div className="flex min-w-max items-center justify-center gap-6 px-4 sm:px-0">
+          <GratingBox cpd={trial.cpd} contrast={trial.contrast} side="left" trial={trial} calib={calib} />
+          <span className="text-2xl text-text-dim">+</span>
+          <GratingBox cpd={trial.cpd} contrast={trial.contrast} side="right" trial={trial} calib={calib} />
+        </div>
       </div>
 
       <p className="mb-3 text-center text-sm text-text-dim">어느 쪽에 줄무늬가 있나요?</p>

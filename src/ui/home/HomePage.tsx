@@ -21,7 +21,7 @@ function HomePage() {
           : { route: ROUTES.preview, cta: 'VCD 미리보기', step: '체험' };
 
   return (
-    <div className="mx-auto max-w-3xl p-6">
+    <div className="mx-auto max-w-3xl p-4 sm:p-6">
       <h1 className="mb-2 text-2xl font-semibold text-text">
         VCD — 시야보정 디스플레이
       </h1>

@@ -33,7 +33,7 @@ function CalibrationPage() {
   const update = useProfileStore((s) => s.update);
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
+    <div className="mx-auto max-w-4xl p-4 sm:p-6">
       <header className="mb-4">
         <h2 className="text-2xl font-semibold text-text">캘리브레이션</h2>
         <p className="text-text-dim">
@@ -161,14 +161,16 @@ function Step1({ onNext }: { onNext: (ppi: number, widthMm: number) => void }) {
         </output>
       </div>
 
-      <div className="mb-4 flex items-center justify-center rounded-md border border-dashed border-line bg-[#1e1e1e] p-6">
-        <div
-          role="img"
-          aria-label="신용카드 오른쪽 절반 가이드"
-          className="relative overflow-hidden"
-          style={{
-            width: `${w}px`,
-            height: `${h}px`,
+      {/* 카드 너비는 사용자가 실제 카드와 맞추는 값이라 viewport 초과 가능 → 가로 스크롤 허용 */}
+      <div className="mb-4 -mx-4 overflow-x-auto sm:mx-0">
+        <div className="mx-4 flex items-center justify-center rounded-md border border-dashed border-line bg-[#1e1e1e] p-6 sm:mx-0">
+          <div
+            role="img"
+            aria-label="신용카드 오른쪽 절반 가이드"
+            className="relative overflow-hidden"
+            style={{
+              width: `${w}px`,
+              height: `${h}px`,
             background: 'linear-gradient(315deg, #3a4254 0%, #25293a 100%)',
             border: '1px solid #4a5169',
             borderLeft: '2px dashed rgba(255,255,255,0.35)',
@@ -238,6 +240,7 @@ function Step1({ onNext }: { onNext: (ppi: number, widthMm: number) => void }) {
           >
             ✂
           </span>
+        </div>
         </div>
       </div>
 

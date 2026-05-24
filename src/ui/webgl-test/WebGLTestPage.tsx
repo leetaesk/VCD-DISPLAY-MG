@@ -66,7 +66,7 @@ function WebGLTestPage() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-5xl p-6">
+    <div className="mx-auto max-w-5xl p-4 sm:p-6">
       <header className="mb-4">
         <h2 className="text-2xl font-semibold text-text">WebGL 테스트 (디버그)</h2>
         <p className="text-text-dim text-sm">
