@@ -22,8 +22,8 @@ import { friendlyCamMessage } from '@/utils/camera';
 
 const HALF_CARD_W_MM = CREDIT_CARD_MM.width / 2;
 const HALF_CARD_H_RATIO = CREDIT_CARD_MM.height / HALF_CARD_W_MM;
-const SAMPLE_SECONDS = 5;
 const STABILITY_TOLERANCE_CM = 5;
+const MIN_SAMPLES_TO_SAVE = 30; // 약 0.5초 분량 — 이 정도 모이면 저장 가능
 
 type Step = 1 | 2 | 3;
 
@@ -241,44 +241,33 @@ function Step2({
   // 일시정지면 hook 내부에서 alone read 안 함 — streamReady와 무관하게 항상 전달.
   const tracker = useFaceLandmarker(videoRef);
 
-  // 5초 sampling
+  // 연속 sampling — 끝나는 시점 없음. 매 rAF tick마다 buffer 추가, 누적 통계 갱신.
   const samplesRef = useRef<number[]>([]);
-  const startTsRef = useRef<number>(0);
-  const [progress, setProgress] = useState(0);
   const [stableCm, setStableCm] = useState<number | null>(null);
-  const [windowClosed, setWindowClosed] = useState(false);
+  const [sampleCount, setSampleCount] = useState(0);
 
+  // streamReady 다시 true 되면 누적 버퍼 초기화 (재시도 등)
   useEffect(() => {
     if (!streamReady) return;
-    startTsRef.current = performance.now();
     samplesRef.current = [];
-    setProgress(0);
     setStableCm(null);
-    setWindowClosed(false);
+    setSampleCount(0);
   }, [streamReady]);
 
   useEffect(() => {
     if (!streamReady) return;
-    if (tracker.frame.ok) {
-      const d = tracker.frame.distanceCm;
-      if (Number.isFinite(d) && d > 10 && d < 200) {
-        const buf = samplesRef.current;
-        buf.push(d);
-        if (buf.length > 200) buf.shift();
-        const recent = buf.slice(-60);
-        const med = median(recent);
-        const stable = recent.filter((v) => Math.abs(v - med) <= STABILITY_TOLERANCE_CM);
-        setStableCm(stable.length ? mean(stable) : med);
-      }
-    }
-    const elapsed = (performance.now() - startTsRef.current) / 1000;
-    const p = Math.min(SAMPLE_SECONDS, elapsed);
-    setProgress(p);
-    if (elapsed >= SAMPLE_SECONDS && !windowClosed) {
-      setWindowClosed(true);
-      if (samplesRef.current.length < 3) setManualMode(true);
-    }
-  }, [tracker.frame, streamReady, windowClosed]);
+    if (!tracker.frame.ok) return;
+    const d = tracker.frame.distanceCm;
+    if (!Number.isFinite(d) || d <= 10 || d >= 200) return;
+    const buf = samplesRef.current;
+    buf.push(d);
+    if (buf.length > 200) buf.shift();
+    const recent = buf.slice(-60);
+    const med = median(recent);
+    const stable = recent.filter((v) => Math.abs(v - med) <= STABILITY_TOLERANCE_CM);
+    setStableCm(stable.length ? mean(stable) : med);
+    setSampleCount(buf.length);
+  }, [tracker.frame, streamReady]);
 
   // overlay 그리기 — face line
   useEffect(() => {
@@ -326,8 +315,8 @@ function Step2({
   }, [tracker.frame]);
 
   const ipdPx = tracker.frame.ok ? tracker.frame.ipdPx : null;
-  const saveDisabled =
-    !windowClosed || !stableCm || stableCm < 10 || stableCm > 200;
+  const ready = sampleCount >= MIN_SAMPLES_TO_SAVE;
+  const saveDisabled = !ready || !stableCm || stableCm < 10 || stableCm > 200;
 
   return (
     <section className="rounded-md border border-line bg-bg-elev p-5">
@@ -374,10 +363,17 @@ function Step2({
             value={stableCm ? `${stableCm.toFixed(1)} cm` : '--'}
           />
           <Readout
-            label="진행"
-            value={`${progress.toFixed(1)}/${SAMPLE_SECONDS}초`}
+            label="샘플"
+            value={`${sampleCount}${ready ? ' ✓' : ` / ${MIN_SAMPLES_TO_SAVE}`}`}
           />
-          <Readout label="상태" value={statusLabel(tracker.status)} />
+          <Readout
+            label="상태"
+            value={
+              tracker.status === 'running' && tracker.frame.ok
+                ? '추적 중 (라이브)'
+                : statusLabel(tracker.status)
+            }
+          />
         </div>
       </div>
 
