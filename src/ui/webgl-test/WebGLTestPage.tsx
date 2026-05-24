@@ -56,12 +56,17 @@ function WebGLTestPage() {
       ctx = createGLContext(cv);
       programs = createPipelinePrograms(ctx.gl);
       setCtxState({ ctx, programs, pipeline: new WienerPipeline(ctx, programs) });
+      setError(null);
     } catch (e) {
+      // StrictMode 2차 마운트에서 1차 ctxState가 남아 있으면 lost-context 위에서
+      // 섹션이 렌더되므로 함께 비움.
+      setCtxState(null);
       setError(e instanceof Error ? e : new Error(String(e)));
     }
     return () => {
       if (ctx && programs) disposePipelinePrograms(ctx.gl, programs);
       if (ctx) disposeGLContext(ctx);
+      setCtxState(null);
     };
   }, []);
 
