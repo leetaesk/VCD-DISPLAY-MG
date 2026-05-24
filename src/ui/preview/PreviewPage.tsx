@@ -361,8 +361,8 @@ function Panel({ caption, data }: { caption: string; data: Float32Array | null }
     <figure className="m-0 flex flex-col items-center gap-1 rounded-md border border-line bg-bg-elev p-2">
       <canvas
         ref={cvRef}
-        className="bg-black"
-        style={{ width: 256, height: 256, imageRendering: 'pixelated' }}
+        className="aspect-square w-full max-w-64 bg-black"
+        style={{ imageRendering: 'pixelated' }}
       />
       <figcaption className="text-xs text-text-dim">{caption}</figcaption>
     </figure>

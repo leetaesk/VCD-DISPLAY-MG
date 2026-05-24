@@ -373,7 +373,7 @@ function DemoSection({
         <CanvasFig caption="|원본 − 복원| ×4" cvRef={diffRef} />
       </div>
 
-      <label className="flex items-center gap-3 text-sm">
+      <label className="flex flex-wrap items-center gap-3 text-sm">
         <span className="text-text-dim">K (regularization)</span>
         <input
           type="range"
@@ -382,7 +382,7 @@ function DemoSection({
           step={1}
           value={kSlider}
           onChange={(e) => onKSlider(Number(e.target.value))}
-          className="w-64"
+          className="w-full max-w-64 flex-1"
         />
         <span className="font-mono text-text">K = {K.toExponential(2)}</span>
       </label>
@@ -404,8 +404,8 @@ function CanvasFig({
     <figure className="flex flex-col items-center gap-1">
       <canvas
         ref={cvRef}
-        className="bg-black"
-        style={{ width: 128, height: 128, imageRendering: 'pixelated' }}
+        className="aspect-square w-full max-w-32 bg-black"
+        style={{ imageRendering: 'pixelated' }}
       />
       <figcaption className="text-xs text-text-dim">{caption}</figcaption>
     </figure>

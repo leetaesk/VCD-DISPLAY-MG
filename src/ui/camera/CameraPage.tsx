@@ -406,8 +406,8 @@ function CameraApp({ profile }: { profile: VCDProfile }) {
       <div className="mb-3 flex justify-center">
         <canvas
           ref={canvasRef}
-          className="rounded-md border border-line bg-black"
-          style={{ width: 384, height: 384, imageRendering: 'pixelated' }}
+          className="aspect-square w-full max-w-96 rounded-md border border-line bg-black"
+          style={{ imageRendering: 'pixelated' }}
         />
         <video ref={videoRef} playsInline muted hidden />
       </div>

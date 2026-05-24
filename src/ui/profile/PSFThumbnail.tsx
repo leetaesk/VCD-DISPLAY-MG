@@ -60,8 +60,8 @@ function PSFThumbnail({ rx, label, N = 64 }: Props) {
     <figure className="m-0 flex flex-col items-center gap-1">
       <canvas
         ref={canvasRef}
-        className="bg-bg-elev-2"
-        style={{ width: 128, height: 128, imageRendering: 'pixelated' }}
+        className="aspect-square w-full max-w-32 bg-bg-elev-2"
+        style={{ imageRendering: 'pixelated' }}
       />
       <figcaption ref={captionRef} className="font-mono text-xs text-text-dim" />
     </figure>
