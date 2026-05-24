@@ -32,17 +32,30 @@ export interface GLContext {
 
 /**
  * 캔버스에 WebGL2 컨텍스트와 fullscreen quad VBO를 만든다.
- * EXT_color_buffer_float가 없으면 throw — Wiener 파이프라인은 RGBA32F 필수.
+ * EXT_color_buffer_float가 없거나, iOS Safari처럼 보고만 하고 실제 FBO
+ * 생성에 실패하는 경우엔 throw — Wiener 파이프라인은 RGBA32F 필수.
  */
 export function createGLContext(canvas: HTMLCanvasElement): GLContext {
   const gl = canvas.getContext('webgl2', {
     antialias: false,
     premultipliedAlpha: false,
   });
-  if (!gl) throw new Error('WebGL2 unsupported on this device.');
+  if (!gl) throw new Error('이 브라우저는 WebGL2를 지원하지 않습니다.');
 
   const ext = gl.getExtension('EXT_color_buffer_float');
-  if (!ext) throw new Error('EXT_color_buffer_float unsupported. Cannot render to RGBA32F.');
+  if (!ext) {
+    throw new Error(
+      '이 기기는 RGBA32F 렌더 타깃(EXT_color_buffer_float)을 지원하지 않아 보정 파이프라인을 실행할 수 없습니다. 데스크탑 Chrome/Firefox/Edge에서 다시 시도해 주세요.',
+    );
+  }
+
+  // 실제로 RGBA32F FBO가 완성되는지 프로브 — iOS Safari는 확장은 노출하지만
+  // 실제 FBO 검사에서 GL_FRAMEBUFFER_UNSUPPORTED(0x8CDD)를 반환하는 경우가 있음.
+  if (!probeFloatFBO(gl)) {
+    throw new Error(
+      '이 기기는 RGBA32F 프레임버퍼를 실제로 생성하지 못합니다 (iOS Safari 등). 데스크탑 브라우저에서 다시 시도해 주세요.',
+    );
+  }
 
   const quad = gl.createBuffer();
   if (!quad) throw new Error('Failed to create quad VBO.');
@@ -60,6 +73,26 @@ export function createGLContext(canvas: HTMLCanvasElement): GLContext {
     quad,
     loseExt: gl.getExtension('WEBGL_lose_context'),
   };
+}
+
+function probeFloatFBO(gl: WebGL2RenderingContext): boolean {
+  const tex = gl.createTexture();
+  const fbo = gl.createFramebuffer();
+  if (!tex || !fbo) return false;
+  try {
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 4, 4, 0, gl.RGBA, gl.FLOAT, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    return gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+  } finally {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.deleteFramebuffer(fbo);
+    gl.deleteTexture(tex);
+  }
 }
 
 /** GLContext 자체와 부속 자원 해제. 호출 후 ctx는 사용 금지. */

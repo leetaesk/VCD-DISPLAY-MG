@@ -74,19 +74,21 @@ function WebGLTestPage() {
         </p>
       </header>
 
-      <div
-        className={[
-          'mb-4 rounded-md border p-3 text-sm',
-          error
-            ? 'border-err/40 bg-err/5 text-err'
-            : ctxState
-              ? 'border-ok/40 bg-ok/5 text-ok'
-              : 'border-line bg-bg-elev text-text-dim',
-        ].join(' ')}
-      >
-        WebGL2 + EXT_color_buffer_float:{' '}
-        {error ? `FAIL — ${error.message}` : ctxState ? 'OK' : '초기화 중…'}
-      </div>
+      {error ? (
+        <div className="mb-4 rounded-md border border-err/40 bg-err/5 p-3 text-sm text-err">
+          <div className="mb-1 font-semibold">WebGL 초기화 실패</div>
+          <p className="text-text">{error.message}</p>
+        </div>
+      ) : (
+        <div
+          className={[
+            'mb-4 rounded-md border p-3 text-sm',
+            ctxState ? 'border-ok/40 bg-ok/5 text-ok' : 'border-line bg-bg-elev text-text-dim',
+          ].join(' ')}
+        >
+          WebGL2 + EXT_color_buffer_float: {ctxState ? 'OK' : '초기화 중…'}
+        </div>
+      )}
 
       {/* hidden GL canvas */}
       <canvas ref={canvasRef} hidden />
