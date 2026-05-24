@@ -493,7 +493,7 @@ function TestPhase({
             key={L}
             type="button"
             onClick={() => addLetter(L)}
-            className="rounded-md border border-line bg-bg-elev-2 py-3 font-mono text-lg text-text hover:border-accent"
+            className="min-h-11 rounded-md border border-line bg-bg-elev-2 py-3 font-mono text-lg text-text hover:border-accent"
           >
             {L}
           </button>

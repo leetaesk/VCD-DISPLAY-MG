@@ -235,7 +235,7 @@ function IshiharaPhase({
             key={d}
             type="button"
             onClick={() => onRespond(String(d))}
-            className="rounded-md border border-line bg-bg-elev-2 py-3 font-mono text-lg text-text hover:border-accent"
+            className="min-h-11 rounded-md border border-line bg-bg-elev-2 py-3 font-mono text-lg text-text hover:border-accent"
           >
             {d}
           </button>
@@ -336,9 +336,11 @@ function FM100Phase({
         탭하여 카드 선택 → 다른 위치 탭하면 두 카드가 교환됩니다.
       </p>
 
+      {/* 모바일은 한 줄에 16칸이면 ~22px이라 탭 불가 → 2줄로 분할.
+          FM100은 양 끝(0, FM100_COUNT-1)이 고정이라 분할로 평가가 깨지지 않음. */}
       <div
-        className="mb-4 grid gap-1"
-        style={{ gridTemplateColumns: `repeat(${FM100_COUNT}, minmax(0, 1fr))` }}
+        className="mb-4 grid grid-cols-8 gap-1 sm:grid-cols-[repeat(var(--fm100-cols),minmax(0,1fr))]"
+        style={{ ['--fm100-cols' as string]: FM100_COUNT }}
       >
         {order.map((colorIdx, slot) => {
           const [r, g, b] = FM100_COLORS[colorIdx];
