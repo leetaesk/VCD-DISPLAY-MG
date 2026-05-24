@@ -354,7 +354,14 @@ function TestPhase({
   onQuit: () => void;
 }) {
   const finalizedCount = CSF_FREQUENCIES_CPD.filter((f) => staircases[f].finalized).length;
-  const currentTrialIdx = (staircases[trial.cpd]?.trials.length ?? 0) + 1;
+  // 전체 trial 누적치 — interleaved staircase는 주파수가 매번 랜덤이라
+  // 주파수별 카운터를 보여주면 값이 들쭉날쭉 줄어드는 것처럼 보임.
+  // 전체 누적치는 monotone-increase 보장.
+  const totalTrials = CSF_FREQUENCIES_CPD.reduce(
+    (s, f) => s + (staircases[f]?.trials.length ?? 0),
+    0,
+  );
+  const totalMax = MAX_TRIALS_PER_FREQ * CSF_FREQUENCIES_CPD.length;
 
   return (
     <section className="relative rounded-md border border-line bg-bg-elev p-5">
@@ -372,7 +379,7 @@ function TestPhase({
         </div>
         <div className="font-mono text-text-dim">
           <span className="text-text">{trial.cpd.toFixed(1)}</span> cpd ·{' '}
-          <span className="text-text">{currentTrialIdx}</span>/{MAX_TRIALS_PER_FREQ}회
+          <span className="text-text">{totalTrials + 1}</span>/{totalMax}회
         </div>
       </div>
 
