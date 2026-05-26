@@ -21,7 +21,8 @@ import { friendlyCamMessage } from '@/utils/camera';
    ───────────────────────────────────────────────────────── */
 
 const HALF_CARD_W_MM = CREDIT_CARD_MM.width / 2;
-const HALF_CARD_H_RATIO = CREDIT_CARD_MM.height / HALF_CARD_W_MM;
+const CARD_H_MM = CREDIT_CARD_MM.height;
+const HALF_CARD_H_RATIO = CARD_H_MM / HALF_CARD_W_MM;
 const STABILITY_TOLERANCE_CM = 5;
 const MIN_SAMPLES_TO_SAVE = 30; // 약 0.5초 분량 — 이 정도 모이면 저장 가능
 
@@ -129,8 +130,8 @@ function Step1({ onNext }: { onNext: (ppi: number, widthMm: number) => void }) {
   const [w, setW] = useState(initial);
 
   const h = w * HALF_CARD_H_RATIO;
-  const ppi = (w / HALF_CARD_W_MM) * 25.4;
-  const screenWidthMm = (window.screen.width / ppi) * 25.4;
+  const ppi = (h / CARD_H_MM) * 25.4;
+  const screenWidthMm = (window.innerWidth / ppi) * 25.4;
 
   return (
     <section className="rounded-md border border-line bg-bg-elev p-5 pb-28 md:pb-5">

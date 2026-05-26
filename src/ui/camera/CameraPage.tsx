@@ -404,11 +404,16 @@ function CameraApp({ profile }: { profile: VCDProfile }) {
 
       {/* Display */}
       <div className="mb-3 flex justify-center">
-        <canvas
-          ref={canvasRef}
-          className="aspect-square w-full max-w-96 rounded-md border border-line bg-black"
-          style={{ imageRendering: 'pixelated' }}
-        />
+        <div className="relative aspect-square w-full max-w-96">
+          <canvas
+            ref={canvasRef}
+            className="h-full w-full rounded-md border border-line bg-black"
+            style={{ imageRendering: 'pixelated' }}
+          />
+          {!streamReady && !streamError && (
+            <CameraLoadingOverlay />
+          )}
+        </div>
         <video ref={videoRef} playsInline muted hidden />
       </div>
 
@@ -528,6 +533,34 @@ function StepMs({ label, v }: { label: string; v: number }) {
     <div className="flex justify-between rounded-sm bg-bg-elev-2 px-2 py-1">
       <span className="text-text-dim">{label}</span>
       <span className="text-text">{v.toFixed(2)}</span>
+    </div>
+  );
+}
+
+function CameraLoadingOverlay() {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  const message =
+    elapsed < 2
+      ? '카메라 준비 중...'
+      : elapsed < 6
+      ? '카메라 권한을 허용해 주세요'
+      : '카메라 켜는 중...';
+  const hint =
+    elapsed >= 6
+      ? '시간이 오래 걸리면 브라우저 주소창의 카메라 아이콘을 확인하세요'
+      : null;
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-md border border-line bg-black/60 backdrop-blur-sm">
+      <div
+        className="h-10 w-10 animate-spin rounded-full border-2 border-accent border-t-transparent"
+        aria-hidden
+      />
+      <div className="text-sm text-text">{message}</div>
+      {hint && <div className="px-4 text-center text-xs text-text-dim">{hint}</div>}
     </div>
   );
 }
