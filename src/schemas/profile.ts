@@ -38,6 +38,7 @@ export const LogMAREyeSchema = z.object({
   logmar: z.number(),
   confidence: z.number().min(0).max(1),
   screen_limited: z.boolean().optional(),
+  manual: z.boolean().optional(), // 측정이 아니라 사용자가 직접 입력한 값
 });
 
 export const LogMARSchema = z.object({

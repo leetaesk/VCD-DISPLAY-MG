@@ -160,12 +160,7 @@ function AmslerFlow({
       )}
 
       {phase === 'preview' && results[eye] && (
-        <PreviewPhase
-          eye={eye}
-          result={results[eye]!}
-          onRedo={startEye}
-          onNext={advance}
-        />
+        <PreviewPhase eye={eye} result={results[eye]!} onRedo={startEye} onNext={advance} />
       )}
 
       {phase === 'combined' && (
@@ -221,9 +216,7 @@ function IntroPhase({
         점만 계속 주시합니다.
       </p>
       <p className="mb-3 text-sm text-text-dim">
-        {otherDone
-          ? '두 번째 눈 — 마지막 검사입니다.'
-          : '첫 번째 눈 — 두 눈 순서대로 검사합니다.'}
+        {otherDone ? '두 번째 눈 — 마지막 검사입니다.' : '첫 번째 눈 — 두 눈 순서대로 검사합니다.'}
       </p>
       <ol className="mb-3 ml-5 list-decimal space-y-1 text-sm text-text">
         <li>중앙 흰 점을 응시한 채, 주변시로 격자 전체를 인지합니다.</li>
@@ -382,7 +375,7 @@ function TestPhase({
 
   const fovDeg =
     (2 *
-      Math.atan(((displayPx * 25.4) / calib.screen_ppi / 2) / (calib.viewing_distance_cm * 10)) *
+      Math.atan((displayPx * 25.4) / calib.screen_ppi / 2 / (calib.viewing_distance_cm * 10)) *
       180) /
     Math.PI;
 
@@ -586,9 +579,7 @@ function PreviewPhase({
     drawMapPreview(cvRef.current, result);
   }, [result]);
 
-  const loc = Array.from(
-    new Set([...result.distortion.locations, ...result.defect.locations]),
-  );
+  const loc = Array.from(new Set([...result.distortion.locations, ...result.defect.locations]));
 
   return (
     <section className="rounded-md border border-line bg-bg-elev p-5">
@@ -712,8 +703,10 @@ function CombinedPhase({
                     />
                   )}
                   <div className="text-xs text-text-dim">
-                    왜곡 <span className="font-mono text-text">{r.distortion.areaPct.toFixed(1)}%</span> ·
-                    결손 <span className="font-mono text-text">{r.defect.areaPct.toFixed(1)}%</span>
+                    왜곡{' '}
+                    <span className="font-mono text-text">{r.distortion.areaPct.toFixed(1)}%</span>{' '}
+                    · 결손{' '}
+                    <span className="font-mono text-text">{r.defect.areaPct.toFixed(1)}%</span>
                   </div>
                   <div className="text-xs text-text-dim">
                     위치{' '}
@@ -744,8 +737,8 @@ function CombinedPhase({
         </div>
         <p className="text-sm text-text">{cls.note}</p>
         <p className="mt-2 text-xs text-text-dim">
-          ⓘ 스크리닝 도구이며 의료 진단이 아닙니다. 황반변성·녹내장 조기 진단의 중요성을 고려해
-          정기 안과 검진을 권장합니다.
+          ⓘ 스크리닝 도구이며 의료 진단이 아닙니다. 황반변성·녹내장 조기 진단의 중요성을 고려해 정기
+          안과 검진을 권장합니다.
         </p>
       </div>
       <div className="flex flex-wrap justify-end gap-2">
@@ -765,7 +758,10 @@ function CombinedPhase({
         </button>
         <button
           type="button"
-          onClick={onProfile}
+          onClick={() => {
+            onSave();
+            onProfile();
+          }}
           className="rounded-md border border-line bg-bg-elev-2 px-3 py-1.5 text-sm hover:border-accent"
         >
           시력 프로파일 보기 →
@@ -789,13 +785,13 @@ function classify(results: { od: EyeResult | null; os: EyeResult | null }): {
       flagged: false,
     };
   const odCentral =
-    !!od && (od.distortion.locations.includes('central') || od.defect.locations.includes('central'));
+    !!od &&
+    (od.distortion.locations.includes('central') || od.defect.locations.includes('central'));
   const osCentral =
-    !!os && (os.distortion.locations.includes('central') || os.defect.locations.includes('central'));
-  const odPerLg =
-    !!od && od.defect.areaPct > 5 && od.defect.locations.includes('peripheral');
-  const osPerLg =
-    !!os && os.defect.areaPct > 5 && os.defect.locations.includes('peripheral');
+    !!os &&
+    (os.distortion.locations.includes('central') || os.defect.locations.includes('central'));
+  const odPerLg = !!od && od.defect.areaPct > 5 && od.defect.locations.includes('peripheral');
+  const osPerLg = !!os && os.defect.areaPct > 5 && os.defect.locations.includes('peripheral');
   const odAny = !!od && od.distortion.areaPct + od.defect.areaPct > 0;
   const osAny = !!os && os.distortion.areaPct + os.defect.areaPct > 0;
 

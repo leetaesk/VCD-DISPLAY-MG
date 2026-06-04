@@ -6,15 +6,15 @@ import GateCalibration from '@/components/GateCalibration';
 import { CSF_FREQUENCIES_CPD, ROUTES } from '@/constants';
 import {
   CONTRAST_LEVELS,
+  type ClassificationResult,
+  type EyeResult,
+  type Staircase,
   WRONG_STREAK_TO_FINALIZE,
   aggregateEyeResult,
   freshStaircase,
   pxPerCycle,
   severityRank,
   staircaseStep,
-  type ClassificationResult,
-  type EyeResult,
-  type Staircase,
 } from '@/features/vcd/csf';
 import { useProfileStore } from '@/store/profileStore';
 import type { CSFEye, Calibration, Eye } from '@/types/profile';
@@ -69,7 +69,9 @@ function CsfFlow({
   onUpdate,
 }: {
   calib: Calibration;
-  onUpdate: (u: (p: import('@/types/profile').VCDProfile) => import('@/types/profile').VCDProfile) => void;
+  onUpdate: (
+    u: (p: import('@/types/profile').VCDProfile) => import('@/types/profile').VCDProfile,
+  ) => void;
 }) {
   const [phase, setPhase] = useState<Phase>('intro');
   const [eye, setEye] = useState<Eye>('od');
@@ -88,20 +90,17 @@ function CsfFlow({
   const feedbackTimer = useRef<number | null>(null);
 
   // 새 trial 선택 — 주파수는 낮은 → 높은 순으로 순차 진행 (이전 random 점프 폐지)
-  const pickNextTrial = useCallback(
-    (scs: Record<number, Staircase>): Trial | null => {
-      const cpd = CSF_FREQUENCIES_CPD.find((f) => !scs[f].finalized);
-      if (cpd === undefined) return null;
-      return {
-        cpd,
-        contrast: scs[cpd].contrast,
-        gratingSide: Math.random() < 0.5 ? 'left' : 'right',
-        startTs: performance.now(),
-        awaiting: true,
-      };
-    },
-    [],
-  );
+  const pickNextTrial = useCallback((scs: Record<number, Staircase>): Trial | null => {
+    const cpd = CSF_FREQUENCIES_CPD.find((f) => !scs[f].finalized);
+    if (cpd === undefined) return null;
+    return {
+      cpd,
+      contrast: scs[cpd].contrast,
+      gratingSide: Math.random() < 0.5 ? 'left' : 'right',
+      startTs: performance.now(),
+      awaiting: true,
+    };
+  }, []);
 
   const finalize = useCallback(
     (scs: Record<number, Staircase>, partial: boolean) => {
@@ -306,9 +305,7 @@ function IntroPhase({
         <strong>{eye === 'od' ? '왼쪽' : '오른쪽'}</strong> 눈을 손바닥으로 가린 채로 진행합니다.
       </p>
       <p className="mb-3 text-sm text-text-dim">
-        {otherDone
-          ? '두 번째 눈 — 마지막 검사입니다.'
-          : '첫 번째 눈 — 두 눈 순서대로 검사합니다.'}
+        {otherDone ? '두 번째 눈 — 마지막 검사입니다.' : '첫 번째 눈 — 두 눈 순서대로 검사합니다.'}
       </p>
       <ol className="mb-4 ml-5 list-decimal space-y-1 text-sm text-text">
         <li>좌우 두 개의 회색 박스가 표시됩니다.</li>
@@ -387,9 +384,21 @@ function TestPhase({
           픽셀-사이클 비율(cpd)은 drawGrating에서 calib 기반으로 계산되므로
           박스 크기를 줄여도 cycles-per-degree 정확도는 유지됨. */}
       <div className="mb-4 flex items-center justify-center gap-3">
-        <GratingBox cpd={trial.cpd} contrast={trial.contrast} side="left" trial={trial} calib={calib} />
+        <GratingBox
+          cpd={trial.cpd}
+          contrast={trial.contrast}
+          side="left"
+          trial={trial}
+          calib={calib}
+        />
         <span className="text-2xl text-text-dim">+</span>
-        <GratingBox cpd={trial.cpd} contrast={trial.contrast} side="right" trial={trial} calib={calib} />
+        <GratingBox
+          cpd={trial.cpd}
+          contrast={trial.contrast}
+          side="right"
+          trial={trial}
+          calib={calib}
+        />
       </div>
 
       <p className="mb-3 text-center text-sm text-text-dim">어느 쪽에 줄무늬가 있나요?</p>
@@ -442,7 +451,9 @@ function TestPhase({
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-bg/80 backdrop-blur-sm">
           <div className="rounded-md border border-line bg-bg-elev p-5 shadow-lg">
             <h4 className="mb-2 text-lg font-semibold text-text">일시정지됨</h4>
-            <p className="mb-4 text-sm text-text-dim">검사를 이어가거나 부분 저장 후 종료할 수 있습니다.</p>
+            <p className="mb-4 text-sm text-text-dim">
+              검사를 이어가거나 부분 저장 후 종료할 수 있습니다.
+            </p>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -607,7 +618,9 @@ function PreviewPhase({
       </div>
       <div className="mb-3 rounded-md border border-line bg-bg-elev-2 p-3">
         <CSFChart
-          datasets={[{ label: eye.toUpperCase(), sensitivities: result.sensitivities, color: '#6ea8ff' }]}
+          datasets={[
+            { label: eye.toUpperCase(), sensitivities: result.sensitivities, color: '#6ea8ff' },
+          ]}
         />
         <p className="mt-2 text-xs text-text-dim">
           회색 띠 = 정상 범위 ±1σ (Pelli & Bex 2013 등 문헌 종합). 색 점 = 사용자 측정값.
@@ -691,7 +704,10 @@ function CombinedPhase({
         </button>
         <button
           type="button"
-          onClick={onProfile}
+          onClick={() => {
+            onSave();
+            onProfile();
+          }}
           className="rounded-md border border-line bg-bg-elev-2 px-3 py-1.5 text-sm hover:border-accent"
         >
           프로파일 보기 →
@@ -709,9 +725,7 @@ function ClassificationCard({ cls }: { cls: ClassificationResult | null }) {
         <span
           className={[
             'rounded-md border px-2 py-0.5 text-xs font-semibold',
-            cls.flagged
-              ? 'border-err/40 bg-err/10 text-err'
-              : 'border-line bg-bg text-text',
+            cls.flagged ? 'border-err/40 bg-err/10 text-err' : 'border-line bg-bg text-text',
           ].join(' ')}
         >
           {cls.label}

@@ -5,9 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import { IDENTITY_3, type RGBMatrix3 } from '@/constants/machado';
 import { ROUTES } from '@/constants/routes';
 import {
-  computeFinalResult,
   type FinalResult,
   type PlateResponse,
+  computeFinalResult,
 } from '@/features/color/classify';
 import {
   FM100_COLORS,
@@ -224,10 +224,7 @@ function IshiharaPhase({
       </div>
 
       <div className="mb-4 flex justify-center">
-        <canvas
-          ref={canvasRef}
-          className="aspect-square w-full max-w-90 rounded-full"
-        />
+        <canvas ref={canvasRef} className="aspect-square w-full max-w-90 rounded-full" />
       </div>
 
       <p className="mb-3 text-center text-sm text-text">점 패턴 안에 어떤 숫자가 보이나요?</p>
@@ -428,10 +425,7 @@ function PreviewPhase({
             caption="② 당신의 색각 시뮬레이션"
             matrix={simulateMatrix(result.type, result.severity)}
           />
-          <WheelFigure
-            caption="③ Daltonize 보정 (2I − M)"
-            matrix={result.correction_lut.matrix}
-          />
+          <WheelFigure caption="③ Daltonize 보정 (2I − M)" matrix={result.correction_lut.matrix} />
         </div>
         <p className="mt-2 text-xs text-text-dim">
           ③ 의 3×3 행렬이 카메라 보정 페이지의 M3 색 변환 단계 입력이 됩니다.
@@ -464,7 +458,10 @@ function PreviewPhase({
         </button>
         <button
           type="button"
-          onClick={onProfile}
+          onClick={() => {
+            onSave();
+            onProfile();
+          }}
           className="rounded-md border border-line bg-bg-elev-2 px-3 py-1.5 text-sm hover:border-accent"
         >
           시력 프로파일 보기 →
@@ -530,14 +527,16 @@ function drawWheel(canvas: HTMLCanvasElement, M: RGBMatrix3) {
 
 function labelForType(t: string): string {
   return (
-    ({
-      normal: '정상 삼색형',
-      protanomaly: '적색약 (protanomaly)',
-      deuteranomaly: '녹색약 (deuteranomaly)',
-      tritanomaly: '청색약 (tritanomaly)',
-      mild_anomaly: '경미한 색각 이상',
-      achromatopsia: '전색맹 의심',
-    } as Record<string, string>)[t] ?? t
+    (
+      {
+        normal: '정상 삼색형',
+        protanomaly: '적색약 (protanomaly)',
+        deuteranomaly: '녹색약 (deuteranomaly)',
+        tritanomaly: '청색약 (tritanomaly)',
+        mild_anomaly: '경미한 색각 이상',
+        achromatopsia: '전색맹 의심',
+      } as Record<string, string>
+    )[t] ?? t
   );
 }
 

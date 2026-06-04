@@ -109,8 +109,7 @@ function reducer(state: State, action: Action): State {
       if (!a) return state;
       const rIdx = a.round;
       const rCfg = STAGE_A_ROUNDS[rIdx];
-      const center =
-        rCfg.center === null ? a.history[rIdx - 1].selected : rCfg.center;
+      const center = rCfg.center === null ? a.history[rIdx - 1].selected : rCfg.center;
       const levels = buildLevels(center, rCfg.half, rCfg.step);
       const history = [...a.history, { round: rIdx, center, levels, selected: action.level }];
       if (rIdx < STAGE_A_ROUNDS.length - 1) {
@@ -147,8 +146,7 @@ function reducer(state: State, action: Action): State {
     case 'confirm_B': {
       if (state.b.axis === null || state.b.perpScore === null) return state;
       const cyl = CYL_FROM_SCORE[state.b.perpScore];
-      const cylConf =
-        state.b.perpScore === 1 ? 0.9 : state.b.perpScore >= 3 ? 0.85 : 0.7;
+      const cylConf = state.b.perpScore === 1 ? 0.9 : state.b.perpScore >= 3 ? 0.85 : 0.7;
       const cur = state.results[state.eye];
       const next: State = {
         ...state,
@@ -229,10 +227,18 @@ function RefractionPage() {
       },
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.phase, state.results.od.sph, state.results.od.cyl, state.results.os.sph, state.results.os.cyl]);
+  }, [
+    state.phase,
+    state.results.od.sph,
+    state.results.od.cyl,
+    state.results.os.sph,
+    state.results.os.cyl,
+  ]);
 
   if (!profile.calibration) {
-    return <GateCalibration reason="굴절 검사 자극의 픽셀 크기는 화면 PPI · 시청 거리로 계산됩니다." />;
+    return (
+      <GateCalibration reason="굴절 검사 자극의 픽셀 크기는 화면 PPI · 시청 거리로 계산됩니다." />
+    );
   }
 
   return (
@@ -262,10 +268,7 @@ function RefractionPage() {
 
 export default RefractionPage;
 
-function toEyeRef(
-  prev: EyeRefraction | undefined,
-  data: EyeResult | null,
-): EyeRefraction {
+function toEyeRef(prev: EyeRefraction | undefined, data: EyeResult | null): EyeRefraction {
   // 어느 한 필드라도 들어오면 기존 값에 머지. 둘 다 없으면 0으로 폴백.
   const base: EyeRefraction = prev ?? { sph: 0, cyl: 0, axis: 0 };
   if (!data) return base;
@@ -297,13 +300,22 @@ function IntroPhase({ state, dispatch }: { state: State; dispatch: React.Dispatc
             SPH 부호 결정에 사용됩니다. 미지정 시 근시(-)로 가정합니다.
           </p>
           <div className="flex flex-wrap gap-2">
-            <SignButton selected={state.signPrior === -1} onClick={() => dispatch({ type: 'set_sign', sign: -1 })}>
+            <SignButton
+              selected={state.signPrior === -1}
+              onClick={() => dispatch({ type: 'set_sign', sign: -1 })}
+            >
               근시 (먼 곳 흐림)
             </SignButton>
-            <SignButton selected={state.signPrior === 1} onClick={() => dispatch({ type: 'set_sign', sign: 1 })}>
+            <SignButton
+              selected={state.signPrior === 1}
+              onClick={() => dispatch({ type: 'set_sign', sign: 1 })}
+            >
               원시/노안 (가까운 곳 흐림)
             </SignButton>
-            <SignButton selected={state.signPrior === 0} onClick={() => dispatch({ type: 'set_sign', sign: 0 })}>
+            <SignButton
+              selected={state.signPrior === 0}
+              onClick={() => dispatch({ type: 'set_sign', sign: 0 })}
+            >
               모름
             </SignButton>
           </div>
@@ -336,7 +348,9 @@ function SignButton({
       onClick={onClick}
       className={[
         'rounded-md border px-3 py-1.5 text-sm',
-        selected ? 'border-accent bg-accent/10 text-accent' : 'border-line bg-bg text-text hover:border-accent',
+        selected
+          ? 'border-accent bg-accent/10 text-accent'
+          : 'border-line bg-bg text-text hover:border-accent',
       ].join(' ')}
     >
       {children}
@@ -466,11 +480,7 @@ function StageAPreview({ state, dispatch }: { state: State; dispatch: React.Disp
       <h3 className="mb-2 text-lg font-semibold text-text">단계 A 결과 ({eyeLabel(state.eye)})</h3>
       <KV>
         <K>SPH</K>
-        <V>
-          {r.sph === null
-            ? '--'
-            : `${r.sph > 0 ? '+' : ''}${r.sph.toFixed(2)} D`}
-        </V>
+        <V>{r.sph === null ? '--' : `${r.sph > 0 ? '+' : ''}${r.sph.toFixed(2)} D`}</V>
         <K>신뢰도</K>
         <V>{Math.round(r.confidence * 100)}%</V>
       </KV>
@@ -650,7 +660,12 @@ function AxisPairPreview({ axisDeg, calib }: { axisDeg: number; calib: Calibrati
       ctx.fillText(label, cx, cy + 36 * dpr);
     };
     drawBar(cv.width * 0.25, cv.height * 0.4, axisDeg, `선택 ${axisDeg}°`);
-    drawBar(cv.width * 0.75, cv.height * 0.4, (axisDeg + 90) % 180, `직교 ${(axisDeg + 90) % 180}°`);
+    drawBar(
+      cv.width * 0.75,
+      cv.height * 0.4,
+      (axisDeg + 90) % 180,
+      `직교 ${(axisDeg + 90) % 180}°`,
+    );
   }, [axisDeg, calib]);
   return (
     <div className="-mx-3 mt-2 overflow-x-auto sm:mx-0">
@@ -746,7 +761,11 @@ function CombinedPhase({
 }: {
   state: State;
   dispatch: React.Dispatch<Action>;
-  onSave: ReturnType<typeof useProfileStore.getState>['update'] | ((u: (p: import('@/types/profile').VCDProfile) => import('@/types/profile').VCDProfile) => void);
+  onSave:
+    | ReturnType<typeof useProfileStore.getState>['update']
+    | ((
+        u: (p: import('@/types/profile').VCDProfile) => import('@/types/profile').VCDProfile,
+      ) => void);
 }) {
   const navigate = useNavigate();
   const conf = avgConfidence(state.results);
@@ -787,7 +806,10 @@ function CombinedPhase({
         </button>
         <button
           type="button"
-          onClick={() => navigate(ROUTES.profile)}
+          onClick={() => {
+            handleSave();
+            navigate(ROUTES.profile);
+          }}
           className="rounded-md border border-line bg-bg-elev-2 px-3 py-1.5 text-sm hover:border-accent"
         >
           프로파일 보기 →
@@ -803,11 +825,7 @@ function EyeCard({ eye, data }: { eye: Eye; data: EyeResult }) {
       <div className="mb-2 text-sm font-semibold text-text">{eyeLabel(eye)}</div>
       <KV>
         <K>SPH</K>
-        <V>
-          {data.sph === null
-            ? '--'
-            : `${data.sph > 0 ? '+' : ''}${data.sph.toFixed(2)}`}
-        </V>
+        <V>{data.sph === null ? '--' : `${data.sph > 0 ? '+' : ''}${data.sph.toFixed(2)}`}</V>
         <K>CYL</K>
         <V>{data.cyl === null ? '--' : data.cyl.toFixed(2)}</V>
         <K>AXIS</K>
@@ -827,4 +845,3 @@ function K({ children }: { children: React.ReactNode }) {
 function V({ children }: { children: React.ReactNode }) {
   return <dd className="font-mono text-text">{children}</dd>;
 }
-

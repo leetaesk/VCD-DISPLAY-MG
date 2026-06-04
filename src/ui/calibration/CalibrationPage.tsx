@@ -447,6 +447,18 @@ function Step2({
             className="absolute inset-0 h-full w-full"
             style={{ transform: 'scaleX(-1)' }}
           />
+          {/* 카메라 시작 / 거리 측정 모델 로딩 중 스피너 — 오류 시에는 ErrorCard가 대신 안내 */}
+          {!streamError &&
+            tracker.status !== 'error' &&
+            (!streamReady || tracker.status === 'loading') && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/60 backdrop-blur-sm">
+                <Spinner />
+                <p className="text-sm font-medium text-white">
+                  {!streamReady ? '카메라 시작 중…' : '거리 측정 모델 로딩 중…'}
+                </p>
+                <p className="text-xs text-white/70">잠시만 기다려 주세요</p>
+              </div>
+            )}
         </div>
 
         <div className="flex flex-col gap-2 text-sm">
@@ -516,6 +528,16 @@ function Step2({
   );
 }
 
+function Spinner() {
+  return (
+    <div
+      role="status"
+      aria-label="로딩 중"
+      className="h-10 w-10 animate-spin rounded-full border-4 border-white/25 border-t-accent"
+    />
+  );
+}
+
 function Readout({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-bg-elev-2 px-3 py-2">
@@ -563,14 +585,15 @@ function Step3({ onRedo }: { onRedo: () => void }) {
   if (!c) {
     return (
       <section className="rounded-md border border-line bg-bg-elev p-5">
-        <p className="text-sm text-text-dim">측정 데이터가 없습니다. 1단계부터 다시 진행해 주세요.</p>
+        <p className="text-sm text-text-dim">
+          측정 데이터가 없습니다. 1단계부터 다시 진행해 주세요.
+        </p>
       </section>
     );
   }
 
   const screenWidthCm = c.screen_width_mm / 10;
-  const distanceLabel =
-    c.distance_source === 'mediapipe_ipd' ? '얼굴 인식 자동 측정' : '직접 입력';
+  const distanceLabel = c.distance_source === 'mediapipe_ipd' ? '얼굴 인식 자동 측정' : '직접 입력';
   const dateLabel = new Date(c.calibration_timestamp).toLocaleString('ko-KR');
 
   return (
